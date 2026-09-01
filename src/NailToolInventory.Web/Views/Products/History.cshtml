@@ -1,0 +1,109 @@
+@using NailToolInventory.Models
+@model NailToolInventory.ViewModels.ProductHistoryViewModel
+
+@{
+    ViewData["Title"] = "Transaction History";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1>Transaction History</h1>
+        <p class="text-muted mb-0">
+            Review all inventory movements for this product.
+        </p>
+    </div>
+
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        Back to Products
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">@Model.ProductName</h5>
+
+        <dl class="row mb-0">
+            <dt class="col-sm-3">SKU</dt>
+            <dd class="col-sm-9">@Model.ProductSku</dd>
+
+            <dt class="col-sm-3">Current Inventory</dt>
+            <dd class="col-sm-9">@Model.CurrentQuantity</dd>
+        </dl>
+    </div>
+</div>
+
+@if (Model.Transactions.Count == 0)
+{
+    <div class="alert alert-info">
+        This product does not have any inventory transactions.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Before</th>
+                    <th>After</th>
+                    <th>Reference</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var transaction in Model.Transactions)
+                {
+                    var badgeClass = transaction.Type switch
+                    {
+                        InventoryTransactionType.Receipt =>
+                            "bg-success",
+
+                        InventoryTransactionType.Issue =>
+                            "bg-danger",
+
+                        _ => "bg-warning text-dark"
+                    };
+
+                    var quantityPrefix = transaction.Type switch
+                    {
+                        InventoryTransactionType.Receipt => "+",
+                        InventoryTransactionType.Issue => "-",
+                        _ => ""
+                    };
+
+                    <tr>
+                        <td>
+                            @transaction.CreatedAtUtc.ToString(
+                                "yyyy-MM-dd HH:mm 'UTC'")
+                        </td>
+
+                        <td>
+                            <span class="badge @badgeClass">
+                                @transaction.Type
+                            </span>
+                        </td>
+
+                        <td class="fw-semibold">
+                            @quantityPrefix@transaction.Quantity
+                        </td>
+
+                        <td>@transaction.QuantityBefore</td>
+                        <td>@transaction.QuantityAfter</td>
+
+                        <td>
+                            @(transaction.Reference ?? "—")
+                        </td>
+
+                        <td>
+                            @(transaction.Notes ?? "—")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

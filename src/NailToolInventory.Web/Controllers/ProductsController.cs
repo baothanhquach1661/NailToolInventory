@@ -264,4 +264,32 @@ public class ProductsController : Controller
 
         return View(model);
     }
+    [HttpGet]
+    public async Task<IActionResult> History(int id)
+    {
+        var product = await _dbContext.Products
+            .AsNoTracking()
+            .SingleOrDefaultAsync(product => product.Id == id);
+
+        if (product is null)
+            return NotFound();
+
+        var transactions = await _dbContext.InventoryTransactions
+            .AsNoTracking()
+            .Where(transaction => transaction.ProductId == id)
+            .OrderByDescending(transaction => transaction.CreatedAtUtc)
+            .ThenByDescending(transaction => transaction.Id)
+            .ToListAsync();
+
+        var model = new ProductHistoryViewModel
+        {
+            ProductId = product.Id,
+            ProductSku = product.Sku,
+            ProductName = product.Name,
+            CurrentQuantity = product.QuantityOnHand,
+            Transactions = transactions
+        };
+
+        return View(model);
+    }
 }
