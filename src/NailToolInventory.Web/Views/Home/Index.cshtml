@@ -1,8 +1,161 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using NailToolInventory.Models
+@model NailToolInventory.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1>Inventory Dashboard</h1>
+        <p class="text-muted mb-0">
+            Overview of products, inventory and recent activity.
+        </p>
+    </div>
+
+    <div>
+        <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary">
+            View Products
+        </a>
+
+        <a asp-controller="Products" asp-action="Create" class="btn btn-primary ms-2">
+            Add Product
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-primary h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Total Products</p>
+                <h2 class="mb-0">@Model.TotalProducts</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-success h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Units On Hand</p>
+                <h2 class="mb-0">@Model.TotalUnitsOnHand</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-danger h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Low-Stock Products</p>
+                <h2 class="mb-0">@Model.LowStockProducts</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-warning h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">
+                    Inventory Cost Value
+                </p>
+
+                <h2 class="mb-0">
+                    @Model.InventoryCostValue.ToString("C")
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Recent Transactions</h5>
+    </div>
+
+    @if (Model.RecentTransactions.Count == 0)
+    {
+        <div class="card-body">
+            <div class="alert alert-info mb-0">
+                There are no inventory transactions yet.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Inventory Change</th>
+                        <th>Reference</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (
+                        var transaction in Model.RecentTransactions)
+                    {
+                        var badgeClass = transaction.Type switch
+                        {
+                            InventoryTransactionType.Receipt =>
+                                "bg-success",
+
+                            InventoryTransactionType.Issue =>
+                                "bg-danger",
+
+                            _ => "bg-warning text-dark"
+                        };
+
+                        var quantityPrefix = transaction.Type switch
+                        {
+                            InventoryTransactionType.Receipt => "+",
+                            InventoryTransactionType.Issue => "-",
+                            _ => ""
+                        };
+
+                        <tr>
+                            <td>
+                                @transaction.CreatedAtUtc.ToString(
+                                    "yyyy-MM-dd HH:mm 'UTC'")
+                            </td>
+
+                            <td>
+                                <div class="fw-semibold">
+                                    @transaction.Product.Sku
+                                </div>
+
+                                <small class="text-muted">
+                                    @transaction.Product.Name
+                                </small>
+                            </td>
+
+                            <td>
+                                <span class="badge @badgeClass">
+                                    @transaction.Type
+                                </span>
+                            </td>
+
+                            <td class="fw-semibold">
+                                @quantityPrefix@transaction.Quantity
+                            </td>
+
+                            <td>
+                                @transaction.QuantityBefore
+                                →
+                                @transaction.QuantityAfter
+                            </td>
+
+                            <td>
+                                @(transaction.Reference ?? "—")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
