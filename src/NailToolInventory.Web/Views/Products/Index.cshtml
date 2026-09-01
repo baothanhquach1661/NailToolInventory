@@ -77,6 +77,9 @@ else
                             }
                         </td>
                         <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-dark">
+                                Edit
+                            </a>
                             <a asp-action="ReceiveStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">
                                 Receive Stock
                             </a>

@@ -292,4 +292,87 @@ public class ProductsController : Controller
 
         return View(model);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var product = await _dbContext.Products
+            .AsNoTracking()
+            .SingleOrDefaultAsync(product => product.Id == id);
+
+        if (product is null)
+            return NotFound();
+
+        var model = new ProductEditViewModel
+        {
+            Id = product.Id,
+            Sku = product.Sku,
+            Name = product.Name,
+            Category = product.Category,
+            CostPrice = product.CostPrice,
+            SellingPrice = product.SellingPrice,
+            ReorderLevel = product.ReorderLevel,
+            IsActive = product.IsActive
+        };
+
+        return View(model);
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(
+        ProductEditViewModel model)
+    {
+        var product = await _dbContext.Products
+            .SingleOrDefaultAsync(
+                product => product.Id == model.Id);
+
+        if (product is null)
+            return NotFound();
+
+        // SKU luôn được lấy từ database và không cho sửa.
+        model.Sku = product.Sku;
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        try
+        {
+            product.UpdateDetails(
+                name: model.Name,
+                category: model.Category!.Value,
+                costPrice: model.CostPrice,
+                sellingPrice: model.SellingPrice,
+                reorderLevel: model.ReorderLevel);
+
+            if (model.IsActive)
+                product.Activate();
+            else
+                product.Deactivate();
+
+            await _dbContext.SaveChangesAsync();
+
+            TempData["SuccessMessage"] =
+                $"Product {product.Sku} was updated successfully.";
+
+            return RedirectToAction(nameof(Index));
+        }
+        catch (ArgumentException exception)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                exception.Message);
+        }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Unable to update the product.");
+        }
+
+        return View(model);
+    }
+
+
 }

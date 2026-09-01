@@ -66,6 +66,51 @@ public class Product
         IsActive = true;
     }
 
+    public void UpdateDetails(
+    string name,
+    ProductCategory category,
+    decimal costPrice,
+    decimal sellingPrice,
+    int reorderLevel)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException(
+                "Product name is required.",
+                nameof(name));
+
+        if (costPrice < 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(costPrice),
+                "Cost price cannot be negative.");
+
+        if (sellingPrice < 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(sellingPrice),
+                "Selling price cannot be negative.");
+
+        if (reorderLevel < 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(reorderLevel),
+                "Reorder level cannot be negative.");
+
+        Name = name.Trim();
+        Category = category;
+        CostPrice = costPrice;
+        SellingPrice = sellingPrice;
+        ReorderLevel = reorderLevel;
+    }
+
+
+    public void Activate()
+    {
+        IsActive = true;
+    }
+
+
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
 
     public void ReceiveStock(int quantity)
     {
