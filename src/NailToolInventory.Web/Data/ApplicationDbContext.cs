@@ -11,12 +11,17 @@ public class ApplicationDbContext : DbContext
     {
     }
 
+
     public DbSet<Product> Products => Set<Product>();
+
+    public DbSet<InventoryTransaction> InventoryTransactions =>
+        Set<InventoryTransaction>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
 
         modelBuilder.Entity<Product>(entity =>
         {
@@ -42,6 +47,33 @@ public class ApplicationDbContext : DbContext
 
             entity.Property(product => product.SellingPrice)
                 .HasPrecision(10, 2);
+        });
+
+
+        modelBuilder.Entity<InventoryTransaction>(entity =>
+        {
+            entity.HasKey(transaction => transaction.Id);
+
+            entity.Property(transaction => transaction.Type)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
+            entity.Property(transaction => transaction.Reference)
+                .HasMaxLength(100);
+
+            entity.Property(transaction => transaction.Notes)
+                .HasMaxLength(500);
+
+            entity.HasOne(transaction => transaction.Product)
+                .WithMany()
+                .HasForeignKey(transaction => transaction.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(transaction => new
+            {
+                transaction.ProductId,
+                transaction.CreatedAtUtc
+            });
         });
     }
 }
