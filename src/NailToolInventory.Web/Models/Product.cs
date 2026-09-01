@@ -115,9 +115,13 @@ public class Product
     public void ReceiveStock(int quantity)
     {
         if (quantity <= 0)
+        {
             throw new ArgumentOutOfRangeException(
                 nameof(quantity),
                 "Quantity must be greater than zero.");
+        }
+
+        EnsureActiveForInventoryTransaction();
 
         QuantityOnHand += quantity;
     }
@@ -126,13 +130,19 @@ public class Product
     public void IssueStock(int quantity)
     {
         if (quantity <= 0)
+        {
             throw new ArgumentOutOfRangeException(
                 nameof(quantity),
                 "Quantity must be greater than zero.");
+        }
+
+        EnsureActiveForInventoryTransaction();
 
         if (quantity > QuantityOnHand)
+        {
             throw new InvalidOperationException(
                 "Not enough inventory to complete this transaction.");
+        }
 
         QuantityOnHand -= quantity;
     }
@@ -141,5 +151,14 @@ public class Product
     public bool IsLowStock()
     {
         return QuantityOnHand <= ReorderLevel;
+    }
+
+    private void EnsureActiveForInventoryTransaction()
+    {
+        if (!IsActive)
+        {
+            throw new InvalidOperationException(
+                "Inventory cannot be changed for an inactive product.");
+        }
     }
 }

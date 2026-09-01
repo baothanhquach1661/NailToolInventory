@@ -75,4 +75,33 @@ public class ProductTests
             sellingPrice: 15.00m,
             reorderLevel: 5);
     }
+
+    [Fact]
+    public void ReceiveStock_WhenProductIsInactive_ShouldThrow()
+    {
+        // Arrange
+        var product = CreateProduct();
+        product.Deactivate();
+
+        // Act
+        var action = () => product.ReceiveStock(5);
+
+        // Assert
+        Assert.Throws<InvalidOperationException>(action);
+    }
+
+    [Fact]
+    public void IssueStock_WhenProductIsInactive_ShouldThrow()
+    {
+        // Arrange
+        var product = CreateProduct();
+        product.ReceiveStock(10);
+        product.Deactivate();
+
+        // Act
+        var action = () => product.IssueStock(2);
+
+        // Assert
+        Assert.Throws<InvalidOperationException>(action);
+    }
 }
