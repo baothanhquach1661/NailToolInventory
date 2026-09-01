@@ -147,6 +147,19 @@ public class Product
         QuantityOnHand -= quantity;
     }
 
+    public void AdjustStock(int newQuantity)
+    {
+        if (newQuantity < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(newQuantity),
+                "Inventory quantity cannot be negative.");
+        }
+
+        EnsureActiveForInventoryTransaction();
+
+        QuantityOnHand = newQuantity;
+    }
 
     public bool IsLowStock()
     {

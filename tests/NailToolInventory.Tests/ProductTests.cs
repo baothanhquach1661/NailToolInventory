@@ -104,4 +104,39 @@ public class ProductTests
         // Assert
         Assert.Throws<InvalidOperationException>(action);
     }
+
+    [Fact]
+    public void AdjustStock_ShouldSetInventoryToCountedQuantity()
+    {
+        // Arrange
+        var product = CreateProduct();
+        product.ReceiveStock(10);
+
+        // Act
+        product.AdjustStock(7);
+
+        // Assert
+        Assert.Equal(7, product.QuantityOnHand);
+    }
+
+    [Fact]
+    public void AdjustStock_WithNegativeQuantity_ShouldThrow()
+    {
+        var product = CreateProduct();
+
+        var action = () => product.AdjustStock(-1);
+
+        Assert.Throws<ArgumentOutOfRangeException>(action);
+    }
+
+    [Fact]
+    public void AdjustStock_WhenProductIsInactive_ShouldThrow()
+    {
+        var product = CreateProduct();
+        product.Deactivate();
+
+        var action = () => product.AdjustStock(5);
+
+        Assert.Throws<InvalidOperationException>(action);
+    }
 }
