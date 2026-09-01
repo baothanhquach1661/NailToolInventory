@@ -43,6 +43,7 @@ else
                     <th>Price</th>
                     <th>Inventory</th>
                     <th>Status</th>
+                    <th class="text-end">Actions</th>
                 </tr>
             </thead>
 
@@ -74,6 +75,11 @@ else
                                     In Stock
                                 </span>
                             }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="ReceiveStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">
+                                Receive Stock
+                            </a>
                         </td>
                     </tr>
                 }
