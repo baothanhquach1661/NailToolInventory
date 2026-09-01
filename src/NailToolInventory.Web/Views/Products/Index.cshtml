@@ -116,7 +116,7 @@ else
                     <tr>
                         <td>@product.Sku</td>
                         <td>@product.Name</td>
-                        <td>@product.Category</td>
+                        <td>@Html.DisplayFor(_ => product.Category)</td>
                         <td>$@product.CostPrice.ToString("N2")</td>
                         <td>$@product.SellingPrice.ToString("N2")</td>
 
