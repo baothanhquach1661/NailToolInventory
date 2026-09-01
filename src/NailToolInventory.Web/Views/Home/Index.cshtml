@@ -96,26 +96,21 @@
                 </thead>
 
                 <tbody>
-                    @foreach (
-                        var transaction in Model.RecentTransactions)
+                    @foreach (var transaction in Model.RecentTransactions)
                     {
-                        var badgeClass = transaction.Type switch
-                        {
-                            InventoryTransactionType.Receipt =>
-                                "bg-success",
+                        var quantityChange =
+                            transaction.QuantityAfter -
+                            transaction.QuantityBefore;
 
-                            InventoryTransactionType.Issue =>
-                                "bg-danger",
+                        var quantityText = quantityChange > 0
+                            ? $"+{quantityChange}"
+                            : quantityChange.ToString();
 
-                            _ => "bg-warning text-dark"
-                        };
-
-                        var quantityPrefix = transaction.Type switch
-                        {
-                            InventoryTransactionType.Receipt => "+",
-                            InventoryTransactionType.Issue => "-",
-                            _ => ""
-                        };
+                        var quantityColor = quantityChange > 0
+                            ? "text-success"
+                            : quantityChange < 0
+                                ? "text-danger"
+                                : "text-muted";
 
                         <tr>
                             <td>
@@ -124,23 +119,40 @@
                             </td>
 
                             <td>
-                                <div class="fw-semibold">
-                                    @transaction.Product.Sku
-                                </div>
+                                <strong>@transaction.Product.Sku</strong>
 
-                                <small class="text-muted">
+                                <br />
+
+                                <span class="text-muted">
                                     @transaction.Product.Name
-                                </small>
-                            </td>
-
-                            <td>
-                                <span class="badge @badgeClass">
-                                    @transaction.Type
                                 </span>
                             </td>
 
-                            <td class="fw-semibold">
-                                @quantityPrefix@transaction.Quantity
+                            <td>
+                                @switch (transaction.Type)
+                                {
+                                    case InventoryTransactionType.Receipt:
+                                        <span class="badge bg-success">
+                                            Receipt
+                                        </span>
+                                        break;
+
+                                    case InventoryTransactionType.Issue:
+                                        <span class="badge bg-danger">
+                                            Issue
+                                        </span>
+                                        break;
+
+                                    case InventoryTransactionType.Adjustment:
+                                        <span class="badge bg-warning text-dark">
+                                            Adjustment
+                                        </span>
+                                        break;
+                                }
+                            </td>
+
+                            <td class="fw-semibold @quantityColor">
+                                @quantityText
                             </td>
 
                             <td>
@@ -150,7 +162,9 @@
                             </td>
 
                             <td>
-                                @(transaction.Reference ?? "—")
+                                @(string.IsNullOrWhiteSpace(transaction.Reference)
+                                    ? "—"
+                                    : transaction.Reference)
                             </td>
                         </tr>
                     }

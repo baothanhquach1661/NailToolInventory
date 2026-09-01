@@ -418,5 +418,108 @@ public class ProductsController : Controller
         return View(model);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> AdjustStock(int id)
+    {
+        var product = await _dbContext.Products
+            .AsNoTracking()
+            .SingleOrDefaultAsync(product => product.Id == id);
+
+        if (product is null)
+        {
+            return NotFound();
+        }
+
+        if (!product.IsActive)
+        {
+            TempData["ErrorMessage"] =
+                "Inventory cannot be adjusted for an inactive product.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        var model = new AdjustStockViewModel
+        {
+            ProductId = product.Id,
+            Sku = product.Sku,
+            ProductName = product.Name,
+            CurrentQuantity = product.QuantityOnHand,
+            NewQuantity = product.QuantityOnHand
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdjustStock(
+        AdjustStockViewModel model)
+    {
+        var product = await _dbContext.Products
+            .SingleOrDefaultAsync(product =>
+                product.Id == model.ProductId);
+
+        if (product is null)
+        {
+            return NotFound();
+        }
+
+        // Không tin dữ liệu tên/SKU gửi lên từ browser.
+        // Luôn lấy lại từ database.
+        model.Sku = product.Sku;
+        model.ProductName = product.Name;
+        model.CurrentQuantity = product.QuantityOnHand;
+
+        if (model.NewQuantity == product.QuantityOnHand)
+        {
+            ModelState.AddModelError(
+                nameof(model.NewQuantity),
+                "Counted quantity is the same as current inventory.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var quantityBefore = product.QuantityOnHand;
+
+        try
+        {
+            product.AdjustStock(model.NewQuantity);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                exception.Message);
+
+            return View(model);
+        }
+
+        var adjustmentQuantity = Math.Abs(
+            product.QuantityOnHand - quantityBefore);
+
+        var transaction = new InventoryTransaction(
+            product.Id,
+            InventoryTransactionType.Adjustment,
+            adjustmentQuantity,
+            quantityBefore,
+            product.QuantityOnHand,
+            model.Reference.Trim(),
+            string.IsNullOrWhiteSpace(model.Notes)
+                ? null
+                : model.Notes.Trim());
+
+        _dbContext.InventoryTransactions.Add(transaction);
+
+        await _dbContext.SaveChangesAsync();
+
+        TempData["SuccessMessage"] =
+            $"Inventory for {product.Sku} was adjusted successfully.";
+
+        return RedirectToAction(nameof(Index));
+    }
+
 
 }

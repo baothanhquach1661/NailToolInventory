@@ -163,6 +163,10 @@ else
                                     <a asp-action="IssueStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-danger">
                                         Issue Stock
                                     </a>
+
+                                    <a asp-action="AdjustStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-warning">
+                                        Adjust
+                                    </a>
                                 }
 
                                 <a asp-action="History" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary">
