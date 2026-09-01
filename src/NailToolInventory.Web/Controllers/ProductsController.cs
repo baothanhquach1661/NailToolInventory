@@ -4,6 +4,8 @@ using NailToolInventory.Data;
 using NailToolInventory.Models;
 using NailToolInventory.ViewModels;
 
+
+
 namespace NailToolInventory.Controllers;
 
 public class ProductsController : Controller
@@ -18,14 +20,56 @@ public class ProductsController : Controller
 
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    [HttpGet]
+    public async Task<IActionResult> Index(
+    string? searchTerm,
+    ProductCategory? category,
+    bool lowStockOnly = false,
+    bool includeInactive = false)
     {
-        var products = await _dbContext.Products
-            .AsNoTracking()
+        var query = _dbContext.Products
+            .AsNoTracking();
+
+        if (!includeInactive)
+        {
+            query = query.Where(product => product.IsActive);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var keyword = searchTerm.Trim();
+
+            query = query.Where(product =>
+                EF.Functions.Like(product.Sku, $"%{keyword}%") ||
+                EF.Functions.Like(product.Name, $"%{keyword}%"));
+        }
+
+        if (category.HasValue)
+        {
+            query = query.Where(product =>
+                product.Category == category.Value);
+        }
+
+        if (lowStockOnly)
+        {
+            query = query.Where(product =>
+                product.QuantityOnHand <= product.ReorderLevel);
+        }
+
+        var products = await query
             .OrderBy(product => product.Name)
             .ToListAsync();
 
-        return View(products);
+        var model = new ProductListViewModel
+        {
+            SearchTerm = searchTerm?.Trim(),
+            Category = category,
+            LowStockOnly = lowStockOnly,
+            IncludeInactive = includeInactive,
+            Products = products
+        };
+
+        return View(model);
     }
 
 

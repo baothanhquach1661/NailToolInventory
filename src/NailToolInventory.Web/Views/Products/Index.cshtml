@@ -1,13 +1,17 @@
-@model IReadOnlyList<NailToolInventory.Models.Product>
+@model NailToolInventory.ViewModels.ProductListViewModel
+@using NailToolInventory.Models
 
 @{
     ViewData["Title"] = "Products";
+    var successMessage =
+        TempData["SuccessMessage"]?.ToString()
+        ?? TempData["Success"]?.ToString();
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-start mb-4">
     <div>
         <h1>Products</h1>
-        <p class="text-muted mb-0">
+        <p class="text-muted">
             Manage nail-tool products and inventory levels.
         </p>
     </div>
@@ -17,23 +21,82 @@
     </a>
 </div>
 
-@if (TempData["SuccessMessage"] is string successMessage)
+@if (!string.IsNullOrWhiteSpace(successMessage))
 {
     <div class="alert alert-success">
         @successMessage
     </div>
 }
 
-@if (Model.Count == 0)
+<div class="card mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get">
+            <div class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+                    <label asp-for="SearchTerm" class="form-label">
+                        Search
+                    </label>
+
+                    <input asp-for="SearchTerm" class="form-control" placeholder="Search by SKU or product name" />
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="Category" class="form-label">
+                        Category
+                    </label>
+
+                    <select asp-for="Category" asp-items="Html.GetEnumSelectList<ProductCategory>()"
+                            class="form-select">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-check mb-2">
+                        <input asp-for="LowStockOnly" class="form-check-input" />
+
+                        <label asp-for="LowStockOnly" class="form-check-label">
+                            Low stock only
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input asp-for="IncludeInactive" class="form-check-input" />
+
+                        <label asp-for="IncludeInactive" class="form-check-label">
+                            Include inactive products
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            Filter
+                        </button>
+
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            Clear
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Products.Count == 0)
 {
     <div class="alert alert-info">
-        No products have been created yet.
+        No products match the selected filters.
     </div>
 }
 else
 {
     <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle">
+        <table class="table table-striped align-middle">
             <thead>
                 <tr>
                     <th>SKU</th>
@@ -48,22 +111,30 @@ else
             </thead>
 
             <tbody>
-                @foreach (var product in Model)
+                @foreach (var product in Model.Products)
                 {
                     <tr>
                         <td>@product.Sku</td>
                         <td>@product.Name</td>
                         <td>@product.Category</td>
-                        <td>@product.CostPrice.ToString("C")</td>
-                        <td>@product.SellingPrice.ToString("C")</td>
+                        <td>$@product.CostPrice.ToString("N2")</td>
+                        <td>$@product.SellingPrice.ToString("N2")</td>
+
                         <td>
                             @product.QuantityOnHand
                             <span class="text-muted">
                                 / reorder at @product.ReorderLevel
                             </span>
                         </td>
+
                         <td>
-                            @if (product.IsLowStock())
+                            @if (!product.IsActive)
+                            {
+                                <span class="badge bg-secondary">
+                                    Inactive
+                                </span>
+                            }
+                            else if (product.IsLowStock())
                             {
                                 <span class="badge bg-danger">
                                     Low Stock
@@ -76,19 +147,28 @@ else
                                 </span>
                             }
                         </td>
-                        <td class="text-end">
-                            <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-dark">
-                                Edit
-                            </a>
-                            <a asp-action="ReceiveStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">
-                                Receive Stock
-                            </a>
-                            <a asp-action="IssueStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-danger ms-1">
-                                Issue Stock
-                            </a>
-                            <a asp-action="History" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary ms-1">
-                                History
-                            </a>
+
+                        <td>
+                            <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-dark">
+                                    Edit
+                                </a>
+
+                                @if (product.IsActive)
+                                {
+                                    <a asp-action="ReceiveStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">
+                                        Receive Stock
+                                    </a>
+
+                                    <a asp-action="IssueStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-danger">
+                                        Issue Stock
+                                    </a>
+                                }
+
+                                <a asp-action="History" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary">
+                                    History
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 }
