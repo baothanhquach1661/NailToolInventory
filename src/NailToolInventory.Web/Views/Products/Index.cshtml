@@ -80,6 +80,9 @@ else
                             <a asp-action="ReceiveStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">
                                 Receive Stock
                             </a>
+                            <a asp-action="IssueStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-danger ms-1">
+                                Issue Stock
+                            </a>
                         </td>
                     </tr>
                 }

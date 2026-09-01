@@ -177,4 +177,91 @@ public class ProductsController : Controller
 
         return View(model);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> IssueStock(int id)
+    {
+        var product = await _dbContext.Products
+            .AsNoTracking()
+            .SingleOrDefaultAsync(product => product.Id == id);
+
+        if (product is null)
+            return NotFound();
+
+        var model = new IssueStockViewModel
+        {
+            ProductId = product.Id,
+            ProductSku = product.Sku,
+            ProductName = product.Name,
+            CurrentQuantity = product.QuantityOnHand
+        };
+
+        return View(model);
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> IssueStock(
+        IssueStockViewModel model)
+    {
+        var product = await _dbContext.Products
+            .SingleOrDefaultAsync(
+                product => product.Id == model.ProductId);
+
+        if (product is null)
+            return NotFound();
+
+        model.ProductSku = product.Sku;
+        model.ProductName = product.Name;
+        model.CurrentQuantity = product.QuantityOnHand;
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var quantityBefore = product.QuantityOnHand;
+
+        try
+        {
+            product.IssueStock(model.Quantity);
+
+            var transaction = new InventoryTransaction(
+                productId: product.Id,
+                type: InventoryTransactionType.Issue,
+                quantity: model.Quantity,
+                quantityBefore: quantityBefore,
+                quantityAfter: product.QuantityOnHand,
+                reference: model.Reference,
+                notes: model.Notes);
+
+            _dbContext.InventoryTransactions.Add(transaction);
+
+            await _dbContext.SaveChangesAsync();
+
+            TempData["SuccessMessage"] =
+                $"Issued {model.Quantity} units of {product.Sku}.";
+
+            return RedirectToAction(nameof(Index));
+        }
+        catch (ArgumentException exception)
+        {
+            ModelState.AddModelError(
+                nameof(model.Quantity),
+                exception.Message);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError(
+                nameof(model.Quantity),
+                exception.Message);
+        }
+        catch (DbUpdateException)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Unable to save the inventory transaction.");
+        }
+
+        return View(model);
+    }
 }

@@ -1,0 +1,89 @@
+@model NailToolInventory.ViewModels.IssueStockViewModel
+
+@{
+    ViewData["Title"] = "Issue Stock";
+}
+
+<h1>Issue Stock</h1>
+
+<p class="text-muted">
+    Remove inventory and record the transaction history.
+</p>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    @Model.ProductName
+                </h5>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">SKU</dt>
+                    <dd class="col-sm-7">@Model.ProductSku</dd>
+
+                    <dt class="col-sm-5">Current Inventory</dt>
+                    <dd class="col-sm-7">
+                        @Model.CurrentQuantity
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (Model.CurrentQuantity == 0)
+        {
+            <div class="alert alert-warning">
+                This product has no inventory available to issue.
+            </div>
+
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                Back to Products
+            </a>
+        }
+        else
+        {
+            <form asp-action="IssueStock" method="post">
+                <input asp-for="ProductId" type="hidden" />
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3">
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Quantity" class="form-label"></label>
+
+                    <input asp-for="Quantity" class="form-control" min="1" max="@Model.CurrentQuantity" />
+
+                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Reference" class="form-label"></label>
+
+                    <input asp-for="Reference" class="form-control" placeholder="Example: SO-1001" />
+
+                    <span asp-validation-for="Reference" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Notes" class="form-label"></label>
+
+                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-danger">
+                    Issue Stock
+                </button>
+
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
