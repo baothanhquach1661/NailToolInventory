@@ -3,10 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using NailToolInventory.Data;
 using NailToolInventory.Models;
 using NailToolInventory.ViewModels;
-
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace NailToolInventory.Controllers;
+
+
+[Authorize(Roles = "Admin,Staff")]
 
 public class ProductsController : Controller
 {
@@ -19,7 +22,6 @@ public class ProductsController : Controller
     }
 
 
-    [HttpGet]
     [HttpGet]
     public async Task<IActionResult> Index(
     string? searchTerm,
@@ -74,6 +76,7 @@ public class ProductsController : Controller
 
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public IActionResult Create()
     {
         return View(new ProductCreateViewModel());
@@ -81,6 +84,7 @@ public class ProductsController : Controller
 
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
         ProductCreateViewModel model)
@@ -212,6 +216,12 @@ public class ProductsController : Controller
                 nameof(model.Quantity),
                 exception.Message);
         }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError(
+                nameof(model.Quantity),
+                exception.Message);
+        }
         catch (DbUpdateException)
         {
             ModelState.AddModelError(
@@ -338,6 +348,7 @@ public class ProductsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int id)
     {
         var product = await _dbContext.Products
@@ -364,6 +375,7 @@ public class ProductsController : Controller
 
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(
         ProductEditViewModel model)
@@ -419,6 +431,7 @@ public class ProductsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> AdjustStock(int id)
     {
         var product = await _dbContext.Products
@@ -451,6 +464,7 @@ public class ProductsController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AdjustStock(
         AdjustStockViewModel model)

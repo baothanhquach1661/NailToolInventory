@@ -4,8 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using NailToolInventory.Data;
 using NailToolInventory.Models;
 using NailToolInventory.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 
 namespace NailToolInventory.Controllers;
+
+[Authorize(Roles = "Admin,Staff")]
 
 public class HomeController : Controller
 {
