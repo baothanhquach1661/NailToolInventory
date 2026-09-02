@@ -4,6 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <UseRazorSourceGenerator>false</UseRazorSourceGenerator>
+
     <UserSecretsId>906fafd8-fcd0-4339-9012-24b3fbfac8fe</UserSecretsId>
   </PropertyGroup>
 
