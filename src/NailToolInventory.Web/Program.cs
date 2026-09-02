@@ -24,8 +24,16 @@ builder.Services
         options.Password.RequireLowercase = true;
         options.Password.RequireNonAlphanumeric = false;
     })
+
+
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Identity/Account/Login";
+    options.AccessDeniedPath = "/Home/AccessDenied";
+});
 
 builder.Services.AddRazorPages();
 // Add services to the container.
@@ -54,11 +62,21 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+
+app.MapMethods(
+    "/Identity/Account/Register",
+    new[] { "GET", "POST" },
+    () => Results.NotFound())
+    .WithOrder(-1);
+
+
 app.MapRazorPages();
 
 
 await IdentitySeeder.SeedAsync(
     app.Services,
     app.Configuration);
+
+
 
 app.Run();

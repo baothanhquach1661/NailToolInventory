@@ -6,10 +6,23 @@
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))
     {
-        <li class="nav-item">
+        <li class="nav-item d-flex align-items-center">
             <span class="nav-link text-dark">
-                Hello, @User.Identity?.Name
+                @User.Identity?.Name
             </span>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <span class="badge bg-primary me-3">
+                    Admin
+                </span>
+            }
+            else if (User.IsInRole("Staff"))
+            {
+                <span class="badge bg-info text-dark me-3">
+                    Staff
+                </span>
+            }
         </li>
 
         <li class="nav-item">
@@ -26,12 +39,6 @@
     }
     else
     {
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">
-                Register
-            </a>
-        </li>
-
         <li class="nav-item">
             <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">
                 Login

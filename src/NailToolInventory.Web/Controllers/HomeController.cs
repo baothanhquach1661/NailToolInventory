@@ -80,4 +80,13 @@ public class HomeController : Controller
                 HttpContext.TraceIdentifier
         });
     }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult AccessDenied()
+    {
+        Response.StatusCode = StatusCodes.Status403Forbidden;
+
+        return View();
+    }
 }

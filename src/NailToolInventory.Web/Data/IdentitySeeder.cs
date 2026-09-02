@@ -20,46 +20,64 @@ public static class IdentitySeeder
         var userManager = scope.ServiceProvider
             .GetRequiredService<UserManager<ApplicationUser>>();
 
-        var roles = new[]
-        {
-            AdminRole,
-            StaffRole
-        };
+        await EnsureRoleAsync(roleManager, AdminRole);
+        await EnsureRoleAsync(roleManager, StaffRole);
 
-        foreach (var roleName in roles)
-        {
-            if (!await roleManager.RoleExistsAsync(roleName))
-            {
-                var roleResult = await roleManager.CreateAsync(
-                    new IdentityRole(roleName));
+        await EnsureUserAsync(
+            userManager,
+            configuration,
+            "SeedAdmin",
+            AdminRole);
 
-                if (!roleResult.Succeeded)
-                {
-                    throw new InvalidOperationException(
-                        string.Join(
-                            "; ",
-                            roleResult.Errors.Select(
-                                error => error.Description)));
-                }
-            }
+        await EnsureUserAsync(
+            userManager,
+            configuration,
+            "SeedStaff",
+            StaffRole);
+    }
+
+    private static async Task EnsureRoleAsync(
+        RoleManager<IdentityRole> roleManager,
+        string roleName)
+    {
+        if (await roleManager.RoleExistsAsync(roleName))
+        {
+            return;
         }
 
-        var email = configuration["SeedAdmin:Email"];
-        var password = configuration["SeedAdmin:Password"];
-        var fullName = configuration["SeedAdmin:FullName"];
+        var result = await roleManager.CreateAsync(
+            new IdentityRole(roleName));
+
+        ThrowIfFailed(result);
+    }
+
+    private static async Task EnsureUserAsync(
+        UserManager<ApplicationUser> userManager,
+        IConfiguration configuration,
+        string configurationSection,
+        string roleName)
+    {
+        var email =
+            configuration[$"{configurationSection}:Email"];
+
+        var password =
+            configuration[$"{configurationSection}:Password"];
+
+        var fullName =
+            configuration[$"{configurationSection}:FullName"];
 
         if (string.IsNullOrWhiteSpace(email) ||
             string.IsNullOrWhiteSpace(password))
         {
             throw new InvalidOperationException(
-                "Seed admin credentials are missing.");
+                $"{configurationSection} credentials are missing.");
         }
 
-        var admin = await userManager.FindByEmailAsync(email);
+        var user = await userManager.FindByEmailAsync(email);
 
-        if (admin is null)
+        if (user is null)
         {
-            admin = new ApplicationUser
+            user = new ApplicationUser
             {
                 UserName = email,
                 Email = email,
@@ -67,58 +85,34 @@ public static class IdentitySeeder
                 EmailConfirmed = true
             };
 
-            var userResult = await userManager.CreateAsync(
-                admin,
+            var createResult = await userManager.CreateAsync(
+                user,
                 password);
 
-            if (!userResult.Succeeded)
-            {
-                throw new InvalidOperationException(
-                    string.Join(
-                        "; ",
-                        userResult.Errors.Select(
-                            error => error.Description)));
-            }
+            ThrowIfFailed(createResult);
         }
-        // else if (!await userManager.CheckPasswordAsync(
-        //      admin,
-        //      password))
-        // {
-        //     var resetToken =
-        //         await userManager.GeneratePasswordResetTokenAsync(admin);
 
-        //     var passwordResult =
-        //         await userManager.ResetPasswordAsync(
-        //             admin,
-        //             resetToken,
-        //             password);
-
-        //     if (!passwordResult.Succeeded)
-        //     {
-        //         throw new InvalidOperationException(
-        //             string.Join(
-        //                 "; ",
-        //                 passwordResult.Errors.Select(
-        //                     error => error.Description)));
-        //     }
-        // }
-
-        if (!await userManager.IsInRoleAsync(
-                admin,
-                AdminRole))
+        if (!await userManager.IsInRoleAsync(user, roleName))
         {
             var roleResult = await userManager.AddToRoleAsync(
-                admin,
-                AdminRole);
+                user,
+                roleName);
 
-            if (!roleResult.Succeeded)
-            {
-                throw new InvalidOperationException(
-                    string.Join(
-                        "; ",
-                        roleResult.Errors.Select(
-                            error => error.Description)));
-            }
+            ThrowIfFailed(roleResult);
         }
+    }
+
+    private static void ThrowIfFailed(IdentityResult result)
+    {
+        if (result.Succeeded)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            string.Join(
+                "; ",
+                result.Errors.Select(
+                    error => error.Description)));
     }
 }

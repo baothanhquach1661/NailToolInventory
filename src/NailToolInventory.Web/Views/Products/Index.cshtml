@@ -16,9 +16,12 @@
         </p>
     </div>
 
-    <a asp-action="Create" class="btn btn-primary">
-        Add Product
-    </a>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            Add Product
+        </a>
+    }
 </div>
 
 @if (!string.IsNullOrWhiteSpace(successMessage))
@@ -150,26 +153,42 @@ else
 
                         <td>
                             <div class="d-flex flex-wrap gap-1 justify-content-end">
-                                <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-dark">
-                                    Edit
-                                </a>
-
-                                @if (product.IsActive)
+                                @if (User.IsInRole("Admin"))
                                 {
-                                    <a asp-action="ReceiveStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">
-                                        Receive Stock
-                                    </a>
-
-                                    <a asp-action="IssueStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-danger">
-                                        Issue Stock
-                                    </a>
-
-                                    <a asp-action="AdjustStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-warning">
-                                        Adjust
+                                    <a asp-action="Edit"
+                                    asp-route-id="@product.Id"
+                                    class="btn btn-sm btn-outline-dark">
+                                        Edit
                                     </a>
                                 }
 
-                                <a asp-action="History" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary">
+                                @if (product.IsActive)
+                                {
+                                    <a asp-action="ReceiveStock"
+                                    asp-route-id="@product.Id"
+                                    class="btn btn-sm btn-outline-primary">
+                                        Receive Stock
+                                    </a>
+
+                                    <a asp-action="IssueStock"
+                                    asp-route-id="@product.Id"
+                                    class="btn btn-sm btn-outline-danger">
+                                        Issue Stock
+                                    </a>
+
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <a asp-action="AdjustStock"
+                                        asp-route-id="@product.Id"
+                                        class="btn btn-sm btn-outline-warning">
+                                            Adjust
+                                        </a>
+                                    }
+                                }
+
+                                <a asp-action="History"
+                                asp-route-id="@product.Id"
+                                class="btn btn-sm btn-outline-secondary">
                                     History
                                 </a>
                             </div>
