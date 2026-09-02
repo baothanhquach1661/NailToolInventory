@@ -1,0 +1,150 @@
+@model NailToolInventory.ViewModels.UserListViewModel
+
+@{
+    ViewData["Title"] = "User Management";
+
+    var successMessage =
+        TempData["SuccessMessage"]?.ToString();
+
+    var errorMessage =
+        TempData["ErrorMessage"]?.ToString();
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1>User Management</h1>
+
+        <p class="text-muted">
+            Manage administrator and staff accounts.
+        </p>
+    </div>
+
+    <a asp-action="Create" class="btn btn-primary">
+        Add Staff Account
+    </a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">
+        @successMessage
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+
+@if (Model.Users.Count == 0)
+{
+    <div class="alert alert-info">
+        No user accounts were found.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td>
+                            @user.FullName
+
+                            @if (user.IsCurrentUser)
+                            {
+                                <span class="badge bg-secondary ms-1">
+                                    You
+                                </span>
+                            }
+                        </td>
+
+                        <td>@user.Email</td>
+
+                        <td>
+                            @if (user.Role.Contains("Admin"))
+                            {
+                                <span class="badge bg-primary">
+                                    @user.Role
+                                </span>
+                            }
+                            else if (user.Role.Contains("Staff"))
+                            {
+                                <span class="badge bg-info text-dark">
+                                    @user.Role
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    @user.Role
+                                </span>
+                            }
+                        </td>
+
+                        <td>
+                            @if (user.IsLockedOut)
+                            {
+                                <span class="badge bg-danger">
+                                    Disabled
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (user.IsCurrentUser)
+                            {
+                                <span class="text-muted">
+                                    Current account
+                                </span>
+                            }
+                            else if (user.Role.Contains("Admin"))
+                            {
+                                <span class="text-muted">
+                                    Protected
+                                </span>
+                            }
+                            else
+                            {
+                                <form asp-action="ToggleStatus" asp-route-id="@user.Id" method="post" class="d-inline">
+
+                                    @if (user.IsLockedOut)
+                                    {
+                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                            Enable
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Disable
+                                        </button>
+                                    }
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
