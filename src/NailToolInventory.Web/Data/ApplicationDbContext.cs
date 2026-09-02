@@ -1,9 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using NailToolInventory.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
 
 namespace NailToolInventory.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext
+    : IdentityDbContext<ApplicationUser>
 {
     public ApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options)
@@ -18,7 +21,8 @@ public class ApplicationDbContext : DbContext
         Set<InventoryTransaction>();
 
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(
+        ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
