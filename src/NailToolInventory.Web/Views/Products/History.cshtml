@@ -47,6 +47,7 @@ else
                 <tr>
                     <th>Date</th>
                     <th>Type</th>
+                    <th>Performed By</th>
                     <th>Quantity</th>
                     <th>Before</th>
                     <th>After</th>
@@ -98,6 +99,20 @@ else
                                         Adjustment
                                     </span>
                                     break;
+                            }
+                        </td>
+
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(
+                                transaction.PerformedByName))
+                            {
+                                <span class="text-muted">
+                                    Legacy / Unknown
+                                </span>
+                            }
+                            else
+                            {
+                                @transaction.PerformedByName
                             }
                         </td>
 

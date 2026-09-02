@@ -18,9 +18,12 @@
             View Products
         </a>
 
-        <a asp-controller="Products" asp-action="Create" class="btn btn-primary ms-2">
-            Add Product
-        </a>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-controller="Products" asp-action="Create" class="btn btn-primary ms-2">
+                Add Product
+            </a>
+        }
     </div>
 </div>
 
@@ -89,6 +92,7 @@
                         <th>Date</th>
                         <th>Product</th>
                         <th>Type</th>
+                        <th>Performed By</th>
                         <th>Quantity</th>
                         <th>Inventory Change</th>
                         <th>Reference</th>
@@ -148,6 +152,20 @@
                                             Adjustment
                                         </span>
                                         break;
+                                }
+                            </td>
+
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(
+                                    transaction.PerformedByName))
+                                {
+                                    <span class="text-muted">
+                                        Legacy / Unknown
+                                    </span>
+                                }
+                                else
+                                {
+                                    @transaction.PerformedByName
                                 }
                             </td>
 

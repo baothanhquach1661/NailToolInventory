@@ -4,6 +4,7 @@ using NailToolInventory.Data;
 using NailToolInventory.Models;
 using NailToolInventory.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 
 namespace NailToolInventory.Controllers;
@@ -186,6 +187,8 @@ public class ProductsController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
+        var auditInfo = GetCurrentUserAuditInfo();
+
         var quantityBefore = product.QuantityOnHand;
 
         try
@@ -199,7 +202,9 @@ public class ProductsController : Controller
                 quantityBefore: quantityBefore,
                 quantityAfter: product.QuantityOnHand,
                 reference: model.Reference,
-                notes: model.Notes);
+                notes: model.Notes,
+                performedByUserId: auditInfo.UserId,
+                performedByName: auditInfo.DisplayName);
 
             _dbContext.InventoryTransactions.Add(transaction);
 
@@ -273,6 +278,8 @@ public class ProductsController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
+        var auditInfo = GetCurrentUserAuditInfo();
+
         var quantityBefore = product.QuantityOnHand;
 
         try
@@ -286,7 +293,9 @@ public class ProductsController : Controller
                 quantityBefore: quantityBefore,
                 quantityAfter: product.QuantityOnHand,
                 reference: model.Reference,
-                notes: model.Notes);
+                notes: model.Notes,
+                performedByUserId: auditInfo.UserId,
+                performedByName: auditInfo.DisplayName);
 
             _dbContext.InventoryTransactions.Add(transaction);
 
@@ -496,6 +505,8 @@ public class ProductsController : Controller
             return View(model);
         }
 
+        var auditInfo = GetCurrentUserAuditInfo();
+
         var quantityBefore = product.QuantityOnHand;
 
         try
@@ -515,15 +526,15 @@ public class ProductsController : Controller
             product.QuantityOnHand - quantityBefore);
 
         var transaction = new InventoryTransaction(
-            product.Id,
-            InventoryTransactionType.Adjustment,
-            adjustmentQuantity,
-            quantityBefore,
-            product.QuantityOnHand,
-            model.Reference.Trim(),
-            string.IsNullOrWhiteSpace(model.Notes)
-                ? null
-                : model.Notes.Trim());
+            productId: product.Id,
+            type: InventoryTransactionType.Adjustment,
+            quantity: adjustmentQuantity,
+            quantityBefore: quantityBefore,
+            quantityAfter: product.QuantityOnHand,
+            reference: model.Reference,
+            notes: model.Notes,
+            performedByUserId: auditInfo.UserId,
+            performedByName: auditInfo.DisplayName);
 
         _dbContext.InventoryTransactions.Add(transaction);
 
@@ -533,6 +544,28 @@ public class ProductsController : Controller
             $"Inventory for {product.Sku} was adjusted successfully.";
 
         return RedirectToAction(nameof(Index));
+    }
+
+    private (string UserId, string DisplayName)
+    GetCurrentUserAuditInfo()
+    {
+        var userId = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new InvalidOperationException(
+                "The current user could not be identified.");
+        }
+
+        var displayName = User.Identity?.Name;
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = userId;
+        }
+
+        return (userId, displayName);
     }
 
 

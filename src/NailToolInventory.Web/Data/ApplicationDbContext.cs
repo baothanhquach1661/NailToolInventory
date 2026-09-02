@@ -1,7 +1,6 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using NailToolInventory.Models;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-
 
 namespace NailToolInventory.Data;
 
@@ -68,10 +67,27 @@ public class ApplicationDbContext
             entity.Property(transaction => transaction.Notes)
                 .HasMaxLength(500);
 
+            entity.Property(
+                    transaction => transaction.PerformedByUserId)
+                .HasMaxLength(450);
+
+            entity.Property(
+                    transaction => transaction.PerformedByName)
+                .HasMaxLength(256);
+
             entity.HasOne(transaction => transaction.Product)
                 .WithMany()
-                .HasForeignKey(transaction => transaction.ProductId)
+                .HasForeignKey(
+                    transaction => transaction.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(
+                    transaction => transaction.PerformedByUser)
+                .WithMany()
+                .HasForeignKey(
+                    transaction =>
+                        transaction.PerformedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasIndex(transaction => new
             {

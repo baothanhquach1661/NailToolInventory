@@ -20,6 +20,12 @@ public class InventoryTransaction
 
     public string? Notes { get; private set; }
 
+    public string? PerformedByUserId { get; private set; }
+
+    public ApplicationUser? PerformedByUser { get; private set; }
+
+    public string? PerformedByName { get; private set; }
+
     public DateTime CreatedAtUtc { get; private set; }
 
 
@@ -35,32 +41,54 @@ public class InventoryTransaction
         int quantityBefore,
         int quantityAfter,
         string? reference = null,
-        string? notes = null)
+        string? notes = null,
+        string? performedByUserId = null,
+        string? performedByName = null)
     {
         if (productId <= 0)
-            throw new ArgumentOutOfRangeException(nameof(productId));
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(productId));
+        }
 
         if (quantity <= 0)
+        {
             throw new ArgumentOutOfRangeException(
                 nameof(quantity),
                 "Quantity must be greater than zero.");
+        }
 
         if (quantityBefore < 0 || quantityAfter < 0)
+        {
             throw new ArgumentOutOfRangeException(
                 nameof(quantityBefore),
                 "Inventory cannot be negative.");
+        }
 
         ProductId = productId;
         Type = type;
         Quantity = quantity;
         QuantityBefore = quantityBefore;
         QuantityAfter = quantityAfter;
+
         Reference = string.IsNullOrWhiteSpace(reference)
             ? null
             : reference.Trim();
+
         Notes = string.IsNullOrWhiteSpace(notes)
             ? null
             : notes.Trim();
+
+        PerformedByUserId =
+            string.IsNullOrWhiteSpace(performedByUserId)
+                ? null
+                : performedByUserId.Trim();
+
+        PerformedByName =
+            string.IsNullOrWhiteSpace(performedByName)
+                ? null
+                : performedByName.Trim();
+
         CreatedAtUtc = DateTime.UtcNow;
     }
 }
