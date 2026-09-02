@@ -110,6 +110,7 @@ else
                                 </span>
                             }
                         </td>
+
                         <td class="text-end">
                             @if (user.IsCurrentUser)
                             {
@@ -123,8 +124,12 @@ else
                                     Protected
                                 </span>
                             }
-                            else
+                            else if (user.Role.Contains("Staff"))
                             {
+                                <a asp-action="ResetPassword" asp-route-id="@user.Id" class="btn btn-sm btn-outline-warning me-1">
+                                    Reset Password
+                                </a>
+
                                 <form asp-action="ToggleStatus" asp-route-id="@user.Id" method="post" class="d-inline">
 
                                     @if (user.IsLockedOut)
@@ -140,6 +145,10 @@ else
                                         </button>
                                     }
                                 </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
                             }
                         </td>
                     </tr>

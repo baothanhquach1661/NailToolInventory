@@ -139,6 +139,128 @@ public class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ResetPassword(
+    string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return BadRequest();
+        }
+
+        var user = await _userManager.FindByIdAsync(id);
+
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        var isStaff = await _userManager.IsInRoleAsync(
+            user,
+            IdentitySeeder.StaffRole);
+
+        var isAdmin = await _userManager.IsInRoleAsync(
+            user,
+            IdentitySeeder.AdminRole);
+
+        if (!isStaff || isAdmin)
+        {
+            TempData["ErrorMessage"] =
+                "Password can only be reset for Staff accounts.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        var model = new ResetStaffPasswordViewModel
+        {
+            UserId = user.Id,
+
+            FullName =
+                string.IsNullOrWhiteSpace(user.FullName)
+                    ? "—"
+                    : user.FullName,
+
+            Email =
+                user.Email ??
+                user.UserName ??
+                "(No email)"
+        };
+
+        return View(model);
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(
+        ResetStaffPasswordViewModel model)
+    {
+        if (string.IsNullOrWhiteSpace(model.UserId))
+        {
+            return BadRequest();
+        }
+
+        var user = await _userManager.FindByIdAsync(
+            model.UserId);
+
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        // Luôn lấy lại thông tin từ database.
+        model.FullName =
+            string.IsNullOrWhiteSpace(user.FullName)
+                ? "—"
+                : user.FullName;
+
+        model.Email =
+            user.Email ??
+            user.UserName ??
+            "(No email)";
+
+        var isStaff = await _userManager.IsInRoleAsync(
+            user,
+            IdentitySeeder.StaffRole);
+
+        var isAdmin = await _userManager.IsInRoleAsync(
+            user,
+            IdentitySeeder.AdminRole);
+
+        if (!isStaff || isAdmin)
+        {
+            TempData["ErrorMessage"] =
+                "Password can only be reset for Staff accounts.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var resetToken =
+            await _userManager.GeneratePasswordResetTokenAsync(
+                user);
+
+        var result = await _userManager.ResetPasswordAsync(
+            user,
+            resetToken,
+            model.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            AddIdentityErrors(result);
+            return View(model);
+        }
+
+        TempData["SuccessMessage"] =
+            $"Password for {model.Email} was reset successfully.";
+
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleStatus(
