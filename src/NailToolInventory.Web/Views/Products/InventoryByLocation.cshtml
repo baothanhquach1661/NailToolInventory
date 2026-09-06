@@ -1,0 +1,190 @@
+@model NailToolInventory.ViewModels.ProductLocationInventoryViewModel
+
+@{
+    ViewData["Title"] = "Inventory by Location";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1>Inventory by Location</h1>
+
+        <p class="text-muted mb-0">
+            @Model.ProductSku — @Model.ProductName
+        </p>
+    </div>
+
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        Back to Products
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">
+        @successMessage
+    </div>
+}
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">
+                    Total On Hand
+                </p>
+
+                <h3 class="mb-0">
+                    @Model.TotalQuantityOnHand
+                </h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">
+                    Total Reserved
+                </p>
+
+                <h3 class="mb-0">
+                    @Model.TotalReservedQuantity
+                </h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">
+                    Total Available
+                </p>
+
+                <h3 class="mb-0">
+                    @Model.TotalAvailableQuantity
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.Locations.Count == 0)
+{
+    <div class="alert alert-warning">
+        This product has no inventory locations.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>On Hand</th>
+                    <th>Reserved</th>
+                    <th>Available</th>
+                    <th>Stock Status</th>
+                    <th>Reorder Level</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var location in Model.Locations)
+                {
+                    <tr>
+                        <td>
+                            <strong>
+                                @location.LocationCode
+                            </strong>
+
+                            <br />
+
+                            <small class="text-muted">
+                                @location.LocationName
+                            </small>
+                        </td>
+
+                        <td>
+                            @if (location.IsLocationActive)
+                            {
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    Inactive
+                                </span>
+                            }
+                        </td>
+
+                        <td>@location.QuantityOnHand</td>
+
+                        <td>@location.ReservedQuantity</td>
+
+                        <td>
+                            <strong>
+                                @location.AvailableQuantity
+                            </strong>
+                        </td>
+
+                        <td>
+                            @if (!location.IsLocationActive)
+                            {
+                                <span class="text-muted">
+                                    Not active
+                                </span>
+                            }
+                            else if (location.IsLowStock)
+                            {
+                                <span class="badge bg-danger">
+                                    Low Stock
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">
+                                    In Stock
+                                </span>
+                            }
+                        </td>
+
+                        <td>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <form asp-action="UpdateReorderLevel" method="post" class="d-flex gap-2">
+
+                                    <input type="hidden" name="ProductId" value="@Model.ProductId" />
+
+                                    <input type="hidden" name="InventoryLevelId" value="@location.InventoryLevelId" />
+
+                                    <input type="number" name="ReorderLevel" value="@location.ReorderLevel" min="0"
+                                           class="form-control form-control-sm" style="width: 90px;" />
+
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        Save
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                @location.ReorderLevel
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

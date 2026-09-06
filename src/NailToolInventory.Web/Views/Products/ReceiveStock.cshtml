@@ -7,7 +7,7 @@
 <h1>Receive Stock</h1>
 
 <p class="text-muted">
-    Add inventory and record the transaction history.
+    Receive inventory into a selected warehouse.
 </p>
 
 <div class="row">
@@ -20,11 +20,9 @@
 
                 <dl class="row mb-0">
                     <dt class="col-sm-5">SKU</dt>
-                    <dd class="col-sm-7">@Model.ProductSku</dd>
 
-                    <dt class="col-sm-5">Current Inventory</dt>
                     <dd class="col-sm-7">
-                        @Model.CurrentQuantity
+                        @Model.ProductSku
                     </dd>
                 </dl>
             </div>
@@ -34,6 +32,23 @@
             <input asp-for="ProductId" type="hidden" />
 
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3">
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="InventoryLocationId" class="form-label"></label>
+
+                <select asp-for="InventoryLocationId" asp-items="Model.Locations" class="form-select">
+                    <option value="">
+                        Select a location
+                    </option>
+                </select>
+
+                <div class="form-text">
+                    Each location shows its current
+                    on-hand inventory.
+                </div>
+
+                <span asp-validation-for="InventoryLocationId" class="text-danger"></span>
             </div>
 
             <div class="mb-3">

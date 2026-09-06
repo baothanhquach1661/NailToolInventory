@@ -155,41 +155,36 @@ else
                             <div class="d-flex flex-wrap gap-1 justify-content-end">
                                 @if (User.IsInRole("Admin"))
                                 {
-                                    <a asp-action="Edit"
-                                    asp-route-id="@product.Id"
-                                    class="btn btn-sm btn-outline-dark">
+                                    <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-sm btn-outline-dark">
                                         Edit
                                     </a>
                                 }
 
                                 @if (product.IsActive)
                                 {
-                                    <a asp-action="ReceiveStock"
-                                    asp-route-id="@product.Id"
-                                    class="btn btn-sm btn-outline-primary">
+                                    <a asp-action="ReceiveStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">
                                         Receive Stock
                                     </a>
 
-                                    <a asp-action="IssueStock"
-                                    asp-route-id="@product.Id"
-                                    class="btn btn-sm btn-outline-danger">
+                                    <a asp-action="IssueStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-danger">
                                         Issue Stock
                                     </a>
 
                                     @if (User.IsInRole("Admin"))
                                     {
-                                        <a asp-action="AdjustStock"
-                                        asp-route-id="@product.Id"
-                                        class="btn btn-sm btn-outline-warning">
+                                        <a asp-action="AdjustStock" asp-route-id="@product.Id" class="btn btn-sm btn-outline-warning">
                                             Adjust
                                         </a>
                                     }
                                 }
 
-                                <a asp-action="History"
-                                asp-route-id="@product.Id"
-                                class="btn btn-sm btn-outline-secondary">
+                                <a asp-action="History" asp-route-id="@product.Id" class="btn btn-sm btn-outline-secondary">
                                     History
+                                </a>
+
+                                <a asp-action="InventoryByLocation" asp-route-id="@product.Id"
+                                   class="btn btn-sm btn-outline-info">
+                                    Inventory
                                 </a>
                             </div>
                         </td>

@@ -45,6 +45,15 @@
                                 </li>
                             }
 
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="InventoryLocations" asp-action="Index">
+                                        Locations
+                                    </a>
+                                </li>
+                            }
+
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">
                                     Privacy

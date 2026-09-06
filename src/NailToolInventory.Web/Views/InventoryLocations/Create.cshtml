@@ -1,0 +1,74 @@
+@model NailToolInventory.ViewModels.CreateInventoryLocationViewModel
+
+@{
+    ViewData["Title"] = "Add Location";
+}
+
+<h1>Add Location</h1>
+
+<p class="text-muted">
+    Add a warehouse or inventory storage location.
+</p>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3">
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Code" class="form-label"></label>
+
+                <input asp-for="Code" class="form-control" placeholder="Example: WEST" />
+
+                <span asp-validation-for="Code" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+
+                <input asp-for="Name" class="form-control" placeholder="Example: West Warehouse" />
+
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Address" class="form-label"></label>
+
+                <textarea asp-for="Address" class="form-control" rows="3"></textarea>
+
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FulfillmentPriority" class="form-label"></label>
+
+                <input asp-for="FulfillmentPriority" class="form-control" min="1" />
+
+                <div class="form-text">
+                    Smaller numbers have higher priority.
+                </div>
+
+                <span asp-validation-for="FulfillmentPriority" class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-3">
+                <input asp-for="CanFulfillOnlineOrders" class="form-check-input" />
+
+                <label asp-for="CanFulfillOnlineOrders" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Create Location
+            </button>
+
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

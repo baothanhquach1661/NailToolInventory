@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace NailToolInventory.ViewModels;
 
@@ -10,8 +11,24 @@ public class AdjustStockViewModel
 
     public string ProductName { get; set; } = string.Empty;
 
-    [Display(Name = "Current Inventory")]
+    [Range(
+        1,
+        int.MaxValue,
+        ErrorMessage = "Please select an inventory location.")]
+    [Display(Name = "Inventory Location")]
+    public int InventoryLocationId { get; set; }
+
+    public string SelectedLocationName { get; set; } =
+        string.Empty;
+
+    public List<SelectListItem> Locations { get; set; } =
+        new();
+
+    [Display(Name = "Current On Hand")]
     public int CurrentQuantity { get; set; }
+
+    [Display(Name = "Reserved Quantity")]
+    public int ReservedQuantity { get; set; }
 
     [Range(
         0,

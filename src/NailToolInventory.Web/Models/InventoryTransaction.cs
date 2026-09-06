@@ -8,6 +8,10 @@ public class InventoryTransaction
 
     public Product Product { get; private set; } = null!;
 
+    public int? InventoryLocationId { get; private set; }
+
+    public InventoryLocation? Location { get; private set; }
+
     public InventoryTransactionType Type { get; private set; }
 
     public int Quantity { get; private set; }
@@ -28,11 +32,9 @@ public class InventoryTransaction
 
     public DateTime CreatedAtUtc { get; private set; }
 
-
     private InventoryTransaction()
     {
     }
-
 
     public InventoryTransaction(
         int productId,
@@ -43,12 +45,20 @@ public class InventoryTransaction
         string? reference = null,
         string? notes = null,
         string? performedByUserId = null,
-        string? performedByName = null)
+        string? performedByName = null,
+        int? inventoryLocationId = null)
     {
         if (productId <= 0)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(productId));
+        }
+
+        if (inventoryLocationId.HasValue &&
+            inventoryLocationId.Value <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(inventoryLocationId));
         }
 
         if (quantity <= 0)
@@ -58,7 +68,8 @@ public class InventoryTransaction
                 "Quantity must be greater than zero.");
         }
 
-        if (quantityBefore < 0 || quantityAfter < 0)
+        if (quantityBefore < 0 ||
+            quantityAfter < 0)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(quantityBefore),
@@ -66,6 +77,7 @@ public class InventoryTransaction
         }
 
         ProductId = productId;
+        InventoryLocationId = inventoryLocationId;
         Type = type;
         Quantity = quantity;
         QuantityBefore = quantityBefore;

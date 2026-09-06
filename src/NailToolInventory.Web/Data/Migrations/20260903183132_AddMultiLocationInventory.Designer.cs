@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NailToolInventory.Data;
 
@@ -10,9 +11,11 @@ using NailToolInventory.Data;
 namespace NailToolInventory.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260903183132_AddMultiLocationInventory")]
+    partial class AddMultiLocationInventory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
@@ -294,9 +297,6 @@ namespace NailToolInventory.Data.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("InventoryLocationId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
@@ -333,8 +333,6 @@ namespace NailToolInventory.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PerformedByUserId");
-
-                    b.HasIndex("InventoryLocationId", "CreatedAtUtc");
 
                     b.HasIndex("ProductId", "CreatedAtUtc");
 
@@ -459,11 +457,6 @@ namespace NailToolInventory.Data.Migrations
 
             modelBuilder.Entity("NailToolInventory.Models.InventoryTransaction", b =>
                 {
-                    b.HasOne("NailToolInventory.Models.InventoryLocation", "Location")
-                        .WithMany()
-                        .HasForeignKey("InventoryLocationId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("NailToolInventory.Models.ApplicationUser", "PerformedByUser")
                         .WithMany()
                         .HasForeignKey("PerformedByUserId")
@@ -474,8 +467,6 @@ namespace NailToolInventory.Data.Migrations
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Location");
 
                     b.Navigation("PerformedByUser");
 

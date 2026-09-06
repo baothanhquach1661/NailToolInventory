@@ -13,18 +13,22 @@ public class ApplicationDbContext
     {
     }
 
-
-    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Product> Products =>
+        Set<Product>();
 
     public DbSet<InventoryTransaction> InventoryTransactions =>
         Set<InventoryTransaction>();
 
+    public DbSet<InventoryLocation> InventoryLocations =>
+        Set<InventoryLocation>();
+
+    public DbSet<InventoryLevel> InventoryLevels =>
+        Set<InventoryLevel>();
 
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
 
         modelBuilder.Entity<Product>(entity =>
         {
@@ -52,6 +56,47 @@ public class ApplicationDbContext
                 .HasPrecision(10, 2);
         });
 
+        modelBuilder.Entity<InventoryLocation>(entity =>
+        {
+            entity.HasKey(location => location.Id);
+
+            entity.HasIndex(location => location.Code)
+                .IsUnique();
+
+            entity.Property(location => location.Code)
+                .IsRequired()
+                .HasMaxLength(30);
+
+            entity.Property(location => location.Name)
+                .IsRequired()
+                .HasMaxLength(150);
+
+            entity.Property(location => location.Address)
+                .HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<InventoryLevel>(entity =>
+        {
+            entity.HasKey(level => level.Id);
+
+            entity.HasIndex(level => new
+            {
+                level.ProductId,
+                level.InventoryLocationId
+            })
+            .IsUnique();
+
+            entity.HasOne(level => level.Product)
+                .WithMany()
+                .HasForeignKey(level => level.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(level => level.Location)
+                .WithMany()
+                .HasForeignKey(
+                    level => level.InventoryLocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         modelBuilder.Entity<InventoryTransaction>(entity =>
         {
@@ -68,11 +113,13 @@ public class ApplicationDbContext
                 .HasMaxLength(500);
 
             entity.Property(
-                    transaction => transaction.PerformedByUserId)
+                    transaction =>
+                        transaction.PerformedByUserId)
                 .HasMaxLength(450);
 
             entity.Property(
-                    transaction => transaction.PerformedByName)
+                    transaction =>
+                        transaction.PerformedByName)
                 .HasMaxLength(256);
 
             entity.HasOne(transaction => transaction.Product)
@@ -81,8 +128,16 @@ public class ApplicationDbContext
                     transaction => transaction.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(transaction => transaction.Location)
+                .WithMany()
+                .HasForeignKey(
+                    transaction =>
+                        transaction.InventoryLocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasOne(
-                    transaction => transaction.PerformedByUser)
+                    transaction =>
+                        transaction.PerformedByUser)
                 .WithMany()
                 .HasForeignKey(
                     transaction =>
@@ -92,6 +147,12 @@ public class ApplicationDbContext
             entity.HasIndex(transaction => new
             {
                 transaction.ProductId,
+                transaction.CreatedAtUtc
+            });
+
+            entity.HasIndex(transaction => new
+            {
+                transaction.InventoryLocationId,
                 transaction.CreatedAtUtc
             });
         });
