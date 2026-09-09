@@ -1,0 +1,328 @@
+@model NailToolInventory.ViewModels.StockTransferDetailsViewModel
+@using NailToolInventory.Models
+
+@{
+    ViewData["Title"] = "Transfer Details";
+
+    var successMessage =
+        TempData["SuccessMessage"]?.ToString();
+
+    var errorMessage =
+        TempData["ErrorMessage"]?.ToString();
+
+    var statusClass =
+        Model.Status switch
+        {
+            StockTransferStatus.Draft =>
+                "bg-secondary",
+
+            StockTransferStatus.InTransit =>
+                "bg-primary",
+
+            StockTransferStatus.PartiallyReceived =>
+                "bg-warning text-dark",
+
+            StockTransferStatus.Completed =>
+                "bg-success",
+
+            StockTransferStatus.Cancelled =>
+                "bg-dark",
+
+            _ => "bg-secondary"
+        };
+
+    var statusText =
+        Model.Status switch
+        {
+            StockTransferStatus.InTransit =>
+                "In Transit",
+
+            StockTransferStatus.PartiallyReceived =>
+                "Partially Received",
+
+            _ => Model.Status.ToString()
+        };
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <h1 class="mb-0">
+                @Model.TransferNumber
+            </h1>
+
+            <span class="badge @statusClass">
+                @statusText
+            </span>
+        </div>
+
+        <p class="text-muted mt-2">
+            Stock transfer details and product quantities.
+        </p>
+    </div>
+
+    <div class="d-flex gap-2">
+        @if (User.IsInRole("Admin") &&
+             Model.CanShip)
+        {
+            <form asp-action="Ship" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Ship this transfer? Inventory will be removed from the source location.');">
+
+                <button type="submit" class="btn btn-primary">
+                    Ship Transfer
+                </button>
+            </form>
+        }
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            Back to Transfers
+        </a>
+    </div>
+</div>
+
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">
+        @successMessage
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+
+
+@if (Model.Status == StockTransferStatus.Draft)
+{
+    <div class="alert alert-info">
+        This transfer is still a draft. Inventory has not
+        been removed from the source location.
+    </div>
+}
+else if (Model.Status ==
+         StockTransferStatus.InTransit)
+{
+    <div class="alert alert-primary">
+        This transfer is in transit. Inventory has been
+        removed from the source location and is waiting
+        to be received at the destination.
+    </div>
+}
+else if (Model.Status ==
+         StockTransferStatus.PartiallyReceived)
+{
+    <div class="alert alert-warning">
+        Part of this transfer has been received.
+    </div>
+}
+else if (Model.Status ==
+         StockTransferStatus.Completed)
+{
+    <div class="alert alert-success">
+        All products in this transfer have been received.
+    </div>
+}
+else if (Model.Status ==
+         StockTransferStatus.Cancelled)
+{
+    <div class="alert alert-secondary">
+        This transfer was cancelled.
+    </div>
+}
+
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                Locations
+            </div>
+
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">
+                        Source
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        @Model.SourceLocationName
+                    </dd>
+
+                    <dt class="col-sm-4">
+                        Destination
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        @Model.DestinationLocationName
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                Transfer Information
+            </div>
+
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">
+                        Reference
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        @(Model.Reference ?? "—")
+                    </dd>
+
+                    <dt class="col-sm-4">
+                        Created By
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        @(Model.CreatedByName ?? "Unknown")
+                    </dd>
+
+                    <dt class="col-sm-4">
+                        Created
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        @(Model.CreatedAtUtc
+                            .ToLocalTime()
+                            .ToString("yyyy-MM-dd HH:mm"))
+                    </dd>
+
+                    @if (Model.ShippedAtUtc.HasValue)
+                    {
+                        <dt class="col-sm-4">
+                            Shipped
+                        </dt>
+
+                        <dd class="col-sm-8">
+                            @(Model.ShippedAtUtc.Value
+                                .ToLocalTime()
+                                .ToString("yyyy-MM-dd HH:mm"))
+                        </dd>
+                    }
+
+                    @if (Model.CompletedAtUtc.HasValue)
+                    {
+                        <dt class="col-sm-4">
+                            Completed
+                        </dt>
+
+                        <dd class="col-sm-8">
+                            @(Model.CompletedAtUtc.Value
+                                .ToLocalTime()
+                                .ToString("yyyy-MM-dd HH:mm"))
+                        </dd>
+                    }
+
+                    @if (Model.CancelledAtUtc.HasValue)
+                    {
+                        <dt class="col-sm-4">
+                            Cancelled
+                        </dt>
+
+                        <dd class="col-sm-8">
+                            @(Model.CancelledAtUtc.Value
+                                .ToLocalTime()
+                                .ToString("yyyy-MM-dd HH:mm"))
+                        </dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="card mb-4">
+    <div class="card-header">
+        Products
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th class="text-end">Sent</th>
+                    <th class="text-end">Received</th>
+                    <th class="text-end">Remaining</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            @item.ProductSku
+                        </td>
+
+                        <td>
+                            @item.ProductName
+                        </td>
+
+                        <td class="text-end">
+                            @item.Quantity
+                        </td>
+
+                        <td class="text-end">
+                            @item.QuantityReceived
+                        </td>
+
+                        <td class="text-end">
+                            @item.RemainingQuantity
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+            <tfoot>
+                <tr class="fw-semibold">
+                    <td colspan="2">
+                        Total
+                    </td>
+
+                    <td class="text-end">
+                        @(Model.Items.Sum(item =>
+                            item.Quantity))
+                    </td>
+
+                    <td class="text-end">
+                        @(Model.Items.Sum(item =>
+                            item.QuantityReceived))
+                    </td>
+
+                    <td class="text-end">
+                        @(Model.Items.Sum(item =>
+                            item.RemainingQuantity))
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+
+@if (!string.IsNullOrWhiteSpace(Model.Notes))
+{
+    <div class="card">
+        <div class="card-header">
+            Notes
+        </div>
+
+        <div class="card-body">
+            @Model.Notes
+        </div>
+    </div>
+}

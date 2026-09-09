@@ -36,6 +36,15 @@
                                 </a>
                             </li>
 
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="StockTransfers" asp-action="Index">
+                                        Transfers
+                                    </a>
+                                </li>
+                            }
+
                             @if (User.IsInRole("Admin"))
                             {
                                 <li class="nav-item">

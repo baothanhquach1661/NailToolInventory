@@ -4,5 +4,7 @@ public enum InventoryTransactionType
 {
     Receipt,
     Issue,
-    Adjustment
+    Adjustment,
+    TransferOut,
+    TransferIn
 }

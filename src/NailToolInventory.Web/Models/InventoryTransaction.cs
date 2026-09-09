@@ -8,9 +8,16 @@ public class InventoryTransaction
 
     public Product Product { get; private set; } = null!;
 
+
     public int? InventoryLocationId { get; private set; }
 
     public InventoryLocation? Location { get; private set; }
+
+
+    public int? StockTransferId { get; private set; }
+
+    public StockTransfer? StockTransfer { get; private set; }
+
 
     public InventoryTransactionType Type { get; private set; }
 
@@ -24,6 +31,7 @@ public class InventoryTransaction
 
     public string? Notes { get; private set; }
 
+
     public string? PerformedByUserId { get; private set; }
 
     public ApplicationUser? PerformedByUser { get; private set; }
@@ -32,9 +40,11 @@ public class InventoryTransaction
 
     public DateTime CreatedAtUtc { get; private set; }
 
+
     private InventoryTransaction()
     {
     }
+
 
     public InventoryTransaction(
         int productId,
@@ -46,19 +56,13 @@ public class InventoryTransaction
         string? notes = null,
         string? performedByUserId = null,
         string? performedByName = null,
-        int? inventoryLocationId = null)
+        int? inventoryLocationId = null,
+        int? stockTransferId = null)
     {
         if (productId <= 0)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(productId));
-        }
-
-        if (inventoryLocationId.HasValue &&
-            inventoryLocationId.Value <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(inventoryLocationId));
         }
 
         if (quantity <= 0)
@@ -76,20 +80,38 @@ public class InventoryTransaction
                 "Inventory cannot be negative.");
         }
 
+        if (inventoryLocationId.HasValue &&
+            inventoryLocationId.Value <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(inventoryLocationId));
+        }
+
+        if (stockTransferId.HasValue &&
+            stockTransferId.Value <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(stockTransferId));
+        }
+
         ProductId = productId;
         InventoryLocationId = inventoryLocationId;
+        StockTransferId = stockTransferId;
+
         Type = type;
         Quantity = quantity;
         QuantityBefore = quantityBefore;
         QuantityAfter = quantityAfter;
 
-        Reference = string.IsNullOrWhiteSpace(reference)
-            ? null
-            : reference.Trim();
+        Reference =
+            string.IsNullOrWhiteSpace(reference)
+                ? null
+                : reference.Trim();
 
-        Notes = string.IsNullOrWhiteSpace(notes)
-            ? null
-            : notes.Trim();
+        Notes =
+            string.IsNullOrWhiteSpace(notes)
+                ? null
+                : notes.Trim();
 
         PerformedByUserId =
             string.IsNullOrWhiteSpace(performedByUserId)
