@@ -61,7 +61,7 @@
         </p>
     </div>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         @if (User.IsInRole("Admin") &&
              Model.CanShip)
         {
@@ -70,6 +70,29 @@
 
                 <button type="submit" class="btn btn-primary">
                     Ship Transfer
+                </button>
+            </form>
+        }
+
+        @if (Model.CanReceive)
+        {
+            <form asp-action="Receive" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Receive all remaining products into the destination location?');">
+
+                <button type="submit" class="btn btn-success">
+                    Receive All
+                </button>
+            </form>
+        }
+
+        @if (User.IsInRole("Admin") &&
+             Model.CanCancel)
+        {
+            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Cancel this draft transfer?');">
+
+                <button type="submit" class="btn btn-outline-danger">
+                    Cancel Transfer
                 </button>
             </form>
         }

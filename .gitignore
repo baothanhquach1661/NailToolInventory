@@ -481,6 +481,11 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
+
 *.db
 *.db-shm
 *.db-wal
+
+# Local development files
+CLAUDE.md
+.DS_Store

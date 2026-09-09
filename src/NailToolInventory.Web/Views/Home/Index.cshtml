@@ -5,95 +5,226 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<div class="d-flex justify-content-between align-items-start mb-4">
-    <div>
-        <h1>Inventory Dashboard</h1>
-        <p class="text-muted mb-0">
-            Overview of products, inventory and recent activity.
-        </p>
-    </div>
+<section class="dashboard-hero mb-4">
+    <div class="dashboard-hero-inner">
+        <div>
+            <span class="dashboard-eyebrow">
+                Inventory Overview
+            </span>
 
-    <div>
-        <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary">
-            View Products
-        </a>
+            <h1>Inventory Dashboard</h1>
 
-        @if (User.IsInRole("Admin"))
-        {
-            <a asp-controller="Products" asp-action="Create" class="btn btn-primary ms-2">
-                Add Product
+            <p>
+                Monitor inventory levels, stock movements,
+                and warehouse activity in one place.
+            </p>
+        </div>
+
+        <div class="dashboard-actions">
+            <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">
+                View Products
             </a>
-        }
+
+            <a asp-controller="StockTransfers" asp-action="Index" class="btn btn-outline-secondary">
+                View Transfers
+            </a>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="Products" asp-action="Create" class="btn btn-primary">
+                    Add Product
+                </a>
+            }
+        </div>
     </div>
-</div>
+</section>
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-primary h-100">
-            <div class="card-body">
-                <p class="text-muted mb-2">Total Products</p>
-                <h2 class="mb-0">@Model.TotalProducts</h2>
+        <a asp-controller="Products" asp-action="Index" class="metric-link">
+
+            <div class="card metric-card metric-blue h-100">
+                <div class="card-body">
+                    <div class="metric-header">
+                        <div>
+                            <div class="metric-label">
+                                Total Products
+                            </div>
+
+                            <div class="metric-value">
+                                @Model.TotalProducts
+                            </div>
+                        </div>
+
+                        <div class="metric-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                <path d="M3.3 7 12 12l8.7-5" />
+                                <path d="M12 22V12" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <small>Products in catalog</small>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-success h-100">
-            <div class="card-body">
-                <p class="text-muted mb-2">Units On Hand</p>
-                <h2 class="mb-0">@Model.TotalUnitsOnHand</h2>
+        <a asp-controller="Products" asp-action="Index" class="metric-link">
+
+            <div class="card metric-card metric-green h-100">
+                <div class="card-body">
+                    <div class="metric-header">
+                        <div>
+                            <div class="metric-label">
+                                Units On Hand
+                            </div>
+
+                            <div class="metric-value">
+                                @Model.TotalUnitsOnHand
+                            </div>
+                        </div>
+
+                        <div class="metric-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m12 2 9 5-9 5-9-5 9-5z" />
+                                <path d="m3 12 9 5 9-5" />
+                                <path d="m3 17 9 5 9-5" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <small>Across all locations</small>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-danger h-100">
-            <div class="card-body">
-                <p class="text-muted mb-2">Low-Stock Products</p>
-                <h2 class="mb-0">@Model.LowStockProducts</h2>
+        <a asp-controller="Products" asp-action="Index" asp-route-lowStockOnly="true" class="metric-link">
+
+            <div class="card metric-card metric-red h-100">
+                <div class="card-body">
+                    <div class="metric-header">
+                        <div>
+                            <div class="metric-label">
+                                Low-Stock Products
+                            </div>
+
+                            <div class="metric-value">
+                                @Model.LowStockProducts
+                            </div>
+                        </div>
+
+                        <div class="metric-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path
+                                d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0z" />
+                                <path d="M12 9v4" />
+                                <path d="M12 17h.01" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <small>Requires attention</small>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-warning h-100">
-            <div class="card-body">
-                <p class="text-muted mb-2">
-                    Inventory Cost Value
-                </p>
+        <a asp-controller="Products" asp-action="Index" class="metric-link">
 
-                <h2 class="mb-0">
-                    @Model.InventoryCostValue.ToString("C")
-                </h2>
+            <div class="card metric-card metric-amber h-100">
+                <div class="card-body">
+                    <div class="metric-header">
+                        <div>
+                            <div class="metric-label">
+                                Inventory Cost Value
+                            </div>
+
+                            <div class="metric-value">
+                                @Model.InventoryCostValue.ToString("C")
+                            </div>
+                        </div>
+
+                        <div class="metric-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+                                <path d="M12 6v12" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <small>Current inventory cost</small>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header bg-white">
-        <h5 class="mb-0">Recent Transactions</h5>
+@if (Model.LowStockProducts > 0)
+{
+    <div class="stock-attention mb-4">
+        <div class="stock-attention-icon">!</div>
+
+        <div class="flex-grow-1">
+            <strong>Inventory attention required</strong>
+
+            <div>
+                @Model.LowStockProducts
+                product(s) are currently below their reorder level.
+            </div>
+        </div>
+
+        <a asp-controller="Products" asp-action="Index" asp-route-lowStockOnly="true" class="btn btn-sm btn-outline-danger">
+            Review Stock
+        </a>
+    </div>
+}
+
+<div class="card dashboard-activity">
+    <div class="card-header">
+        <div>
+            <h2>Recent Transactions</h2>
+
+            <p>
+                Latest inventory activity across your locations.
+            </p>
+        </div>
+
+        <a asp-controller="StockTransfers" asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            View Transfers
+        </a>
     </div>
 
-    @if (Model.RecentTransactions.Count == 0)
+    @if (!Model.RecentTransactions.Any())
     {
-        <div class="card-body">
-            <div class="alert alert-info mb-0">
-                There are no inventory transactions yet.
-            </div>
+        <div class="dashboard-empty-state">
+            <h3>No inventory activity yet</h3>
+
+            <p>
+                Transactions will appear here after inventory
+                is received, issued, adjusted, or transferred.
+            </p>
         </div>
     }
     else
     {
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table dashboard-table align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>Product</th>
+                        <th>Location</th>
                         <th>Type</th>
                         <th>Performed By</th>
-                        <th>Quantity</th>
+                        <th class="text-end">Quantity</th>
                         <th>Inventory Change</th>
                         <th>Reference</th>
                     </tr>
@@ -102,34 +233,64 @@
                 <tbody>
                     @foreach (var transaction in Model.RecentTransactions)
                     {
-                        var quantityChange =
-                            transaction.QuantityAfter -
-                            transaction.QuantityBefore;
+                        var quantityClass =
+                            transaction.Quantity > 0
+                                ? "text-success"
+                                : transaction.Quantity < 0
+                                    ? "text-danger"
+                                    : "text-secondary";
 
-                        var quantityText = quantityChange > 0
-                            ? $"+{quantityChange}"
-                            : quantityChange.ToString();
-
-                        var quantityColor = quantityChange > 0
-                            ? "text-success"
-                            : quantityChange < 0
-                                ? "text-danger"
-                                : "text-muted";
+                        var quantityText =
+                            transaction.Quantity > 0
+                                ? $"+{transaction.Quantity}"
+                                : transaction.Quantity.ToString();
 
                         <tr>
-                            <td>
-                                @transaction.CreatedAtUtc.ToString(
-                                    "yyyy-MM-dd HH:mm 'UTC'")
+                            <td class="text-nowrap">
+                                <div class="transaction-date">
+                                    @(
+                                        transaction.CreatedAtUtc
+                                            .ToLocalTime()
+                                            .ToString("MMM dd, yyyy")
+                                    )
+                                </div>
+
+                                <small>
+                                    @(
+                                        transaction.CreatedAtUtc
+                                            .ToLocalTime()
+                                            .ToString("HH:mm")
+                                    )
+                                </small>
                             </td>
 
                             <td>
-                                <strong>@transaction.Product.Sku</strong>
+                                <a asp-controller="Products" asp-action="InventoryByLocation"
+                                   asp-route-id="@transaction.ProductId" class="transaction-product-link">
 
-                                <br />
+                                    @transaction.Product.Sku
+                                </a>
 
-                                <span class="text-muted">
+                                <div class="transaction-product-name">
                                     @transaction.Product.Name
-                                </span>
+                                </div>
+                            </td>
+
+                            <td>
+                                @if (transaction.Location is not null)
+                                {
+                                    <span class="location-code">
+                                        @transaction.Location.Code
+                                    </span>
+
+                                    <div class="location-name">
+                                        @transaction.Location.Name
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
                             </td>
 
                             <td>
@@ -152,37 +313,77 @@
                                             Adjustment
                                         </span>
                                         break;
+
+                                    case InventoryTransactionType.TransferOut:
+                                        <span class="badge bg-dark">
+                                            Transfer Out
+                                        </span>
+                                        break;
+
+                                    case InventoryTransactionType.TransferIn:
+                                        <span class="badge bg-primary">
+                                            Transfer In
+                                        </span>
+                                        break;
+
+                                    default:
+                                        <span class="badge bg-secondary">
+                                            @transaction.Type
+                                        </span>
+                                        break;
                                 }
                             </td>
 
                             <td>
-                                @if (string.IsNullOrWhiteSpace(
-                                    transaction.PerformedByName))
+                                @(
+                                    string.IsNullOrWhiteSpace(
+                                        transaction.PerformedByName)
+                                        ? "System"
+                                        : transaction.PerformedByName
+                                )
+                            </td>
+
+                            <td class="text-end">
+                                <strong class="@quantityClass">
+                                    @quantityText
+                                </strong>
+                            </td>
+
+                            <td class="text-nowrap">
+                                <span class="inventory-before">
+                                    @transaction.QuantityBefore
+                                </span>
+
+                                <span class="inventory-arrow">→</span>
+
+                                <strong>
+                                    @transaction.QuantityAfter
+                                </strong>
+                            </td>
+
+                            <td>
+                                @if (transaction.StockTransferId.HasValue)
                                 {
-                                    <span class="text-muted">
-                                        Legacy / Unknown
-                                    </span>
+                                    <a asp-controller="StockTransfers" asp-action="Details"
+                                       asp-route-id="@transaction.StockTransferId" class="reference-link">
+
+                                        @(
+                                            string.IsNullOrWhiteSpace(
+                                                transaction.Reference)
+                                                ? "View transfer"
+                                                : transaction.Reference
+                                        )
+                                    </a>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(
+                                    transaction.Reference))
+                                {
+                                    <span>@transaction.Reference</span>
                                 }
                                 else
                                 {
-                                    @transaction.PerformedByName
+                                    <span class="text-muted">—</span>
                                 }
-                            </td>
-
-                            <td class="fw-semibold @quantityColor">
-                                @quantityText
-                            </td>
-
-                            <td>
-                                @transaction.QuantityBefore
-                                →
-                                @transaction.QuantityAfter
-                            </td>
-
-                            <td>
-                                @(string.IsNullOrWhiteSpace(transaction.Reference)
-                                    ? "—"
-                                    : transaction.Reference)
                             </td>
                         </tr>
                     }

@@ -333,6 +333,246 @@ public class StockTransfersController : Controller
             new { id });
     }
 
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> Receive(int id)
+    {
+        var transfer =
+            await _dbContext.StockTransfers
+                .Include(transfer =>
+                    transfer.SourceLocation)
+                .Include(transfer =>
+                    transfer.DestinationLocation)
+                .Include(transfer => transfer.Items)
+                    .ThenInclude(item => item.Product)
+                .SingleOrDefaultAsync(
+                    transfer => transfer.Id == id);
+
+        if (transfer is null)
+        {
+            return NotFound();
+        }
+
+        if (transfer.Status !=
+                StockTransferStatus.InTransit &&
+            transfer.Status !=
+                StockTransferStatus.PartiallyReceived)
+        {
+            TempData["ErrorMessage"] =
+                "Only transfers in transit can be received.";
+
+            return RedirectToAction(
+                nameof(Details),
+                new { id });
+        }
+
+
+        var remainingItems =
+            transfer.Items
+                .Where(item =>
+                    item.RemainingQuantity > 0)
+                .ToList();
+
+        if (remainingItems.Count == 0)
+        {
+            TempData["ErrorMessage"] =
+                "This transfer has no remaining products to receive.";
+
+            return RedirectToAction(
+                nameof(Details),
+                new { id });
+        }
+
+
+        var productIds =
+            remainingItems
+                .Select(item => item.ProductId)
+                .ToList();
+
+        var destinationLevels =
+            await _dbContext.InventoryLevels
+                .Include(level => level.Product)
+                .Where(level =>
+                    level.InventoryLocationId ==
+                    transfer.DestinationLocationId &&
+                    productIds.Contains(level.ProductId))
+                .ToDictionaryAsync(
+                    level => level.ProductId);
+
+
+        foreach (var item in remainingItems)
+        {
+            if (!destinationLevels.ContainsKey(
+                    item.ProductId))
+            {
+                TempData["ErrorMessage"] =
+                    $"{item.Product.Sku} has no inventory " +
+                    "record at the destination location.";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new { id });
+            }
+        }
+
+
+        var currentUser =
+            await _userManager.GetUserAsync(User);
+
+        var performedByName =
+            currentUser?.FullName
+            ?? currentUser?.Email
+            ?? User.Identity?.Name;
+
+
+        await using var databaseTransaction =
+            await _dbContext.Database
+                .BeginTransactionAsync();
+
+        try
+        {
+            foreach (var item in remainingItems)
+            {
+                var quantityToReceive =
+                    item.RemainingQuantity;
+
+                var inventoryLevel =
+                    destinationLevels[item.ProductId];
+
+                var quantityBefore =
+                    inventoryLevel.QuantityOnHand;
+
+
+                inventoryLevel.ReceiveStock(
+                    quantityToReceive);
+
+                // Đồng bộ lại cột tồn kho tổng cũ.
+                inventoryLevel.Product.ReceiveStock(
+                    quantityToReceive);
+
+                transfer.RecordReceipt(
+                    item.ProductId,
+                    quantityToReceive);
+
+
+                var inventoryTransaction =
+                    new InventoryTransaction(
+                        productId: item.ProductId,
+                        type:
+                            InventoryTransactionType.TransferIn,
+                        quantity: quantityToReceive,
+                        quantityBefore: quantityBefore,
+                        quantityAfter:
+                            inventoryLevel.QuantityOnHand,
+                        reference:
+                            transfer.TransferNumber,
+                        notes:
+                            $"Transfer received from " +
+                            $"{transfer.SourceLocation.Code} " +
+                            $"into " +
+                            $"{transfer.DestinationLocation.Code}.",
+                        performedByUserId:
+                            currentUser?.Id,
+                        performedByName:
+                            performedByName,
+                        inventoryLocationId:
+                            transfer.DestinationLocationId,
+                        stockTransferId:
+                            transfer.Id);
+
+                _dbContext.InventoryTransactions.Add(
+                    inventoryTransaction);
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            await databaseTransaction.CommitAsync();
+
+            TempData["SuccessMessage"] =
+                $"Transfer {transfer.TransferNumber} " +
+                "was received successfully.";
+        }
+        catch (ArgumentException exception)
+        {
+            await databaseTransaction.RollbackAsync();
+
+            TempData["ErrorMessage"] =
+                exception.Message;
+        }
+        catch (InvalidOperationException exception)
+        {
+            await databaseTransaction.RollbackAsync();
+
+            TempData["ErrorMessage"] =
+                exception.Message;
+        }
+        catch (DbUpdateException)
+        {
+            await databaseTransaction.RollbackAsync();
+
+            TempData["ErrorMessage"] =
+                "Unable to receive the stock transfer.";
+        }
+
+        return RedirectToAction(
+            nameof(Details),
+            new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Cancel(int id)
+    {
+        var transfer =
+            await _dbContext.StockTransfers
+                .SingleOrDefaultAsync(
+                    transfer => transfer.Id == id);
+
+        if (transfer is null)
+        {
+            return NotFound();
+        }
+
+        if (transfer.Status !=
+            StockTransferStatus.Draft)
+        {
+            TempData["ErrorMessage"] =
+                "Only draft transfers can be cancelled.";
+
+            return RedirectToAction(
+                nameof(Details),
+                new { id });
+        }
+
+        try
+        {
+            transfer.Cancel();
+
+            await _dbContext.SaveChangesAsync();
+
+            TempData["SuccessMessage"] =
+                $"Transfer {transfer.TransferNumber} " +
+                "was cancelled.";
+        }
+        catch (InvalidOperationException exception)
+        {
+            TempData["ErrorMessage"] =
+                exception.Message;
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] =
+                "Unable to cancel the stock transfer.";
+        }
+
+        return RedirectToAction(
+            nameof(Details),
+            new { id });
+    }
+
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create()
     {
