@@ -1,4 +1,5 @@
 # Nail Tool Inventory
+[![.NET CI](https://github.com/baothanhquach1661/NailToolInventory/actions/workflows/dotnet.yml/badge.svg)](https://github.com/baothanhquach1661/NailToolInventory/actions/workflows/dotnet.yml)
 
 Nail Tool Inventory is a role-based inventory management application built with ASP.NET Core MVC. It supports product management, inventory tracking across multiple warehouse locations, stock movements, warehouse transfers, user administration, and an auditable transaction history.
 
