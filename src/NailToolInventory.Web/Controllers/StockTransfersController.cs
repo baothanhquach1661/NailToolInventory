@@ -246,10 +246,6 @@ public class StockTransfersController : Controller
             ?? User.Identity?.Name;
 
 
-        await using var databaseTransaction =
-            await _dbContext.Database
-                .BeginTransactionAsync();
-
         try
         {
             transfer.MarkInTransit();
@@ -300,30 +296,22 @@ public class StockTransfersController : Controller
 
             await _dbContext.SaveChangesAsync();
 
-            await databaseTransaction.CommitAsync();
-
             TempData["SuccessMessage"] =
                 $"Transfer {transfer.TransferNumber} " +
                 "is now in transit.";
         }
         catch (ArgumentException exception)
         {
-            await databaseTransaction.RollbackAsync();
-
             TempData["ErrorMessage"] =
                 exception.Message;
         }
         catch (InvalidOperationException exception)
         {
-            await databaseTransaction.RollbackAsync();
-
             TempData["ErrorMessage"] =
                 exception.Message;
         }
         catch (DbUpdateException)
         {
-            await databaseTransaction.RollbackAsync();
-
             TempData["ErrorMessage"] =
                 "Unable to ship the stock transfer.";
         }
@@ -427,10 +415,6 @@ public class StockTransfersController : Controller
             ?? User.Identity?.Name;
 
 
-        await using var databaseTransaction =
-            await _dbContext.Database
-                .BeginTransactionAsync();
-
         try
         {
             foreach (var item in remainingItems)
@@ -488,30 +472,22 @@ public class StockTransfersController : Controller
 
             await _dbContext.SaveChangesAsync();
 
-            await databaseTransaction.CommitAsync();
-
             TempData["SuccessMessage"] =
                 $"Transfer {transfer.TransferNumber} " +
                 "was received successfully.";
         }
         catch (ArgumentException exception)
         {
-            await databaseTransaction.RollbackAsync();
-
             TempData["ErrorMessage"] =
                 exception.Message;
         }
         catch (InvalidOperationException exception)
         {
-            await databaseTransaction.RollbackAsync();
-
             TempData["ErrorMessage"] =
                 exception.Message;
         }
         catch (DbUpdateException)
         {
-            await databaseTransaction.RollbackAsync();
-
             TempData["ErrorMessage"] =
                 "Unable to receive the stock transfer.";
         }

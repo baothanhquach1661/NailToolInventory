@@ -138,44 +138,48 @@ public class InventoryLocationsController : Controller
             return View(model);
         }
 
-        await using var databaseTransaction =
-            await _dbContext.Database
-                .BeginTransactionAsync();
-
         try
         {
-            _dbContext.InventoryLocations.Add(location);
-            await _dbContext.SaveChangesAsync();
+            var executionStrategy =
+                _dbContext.Database.CreateExecutionStrategy();
 
-            var products =
-                await _dbContext.Products
-                    .AsNoTracking()
-                    .Select(product => new
-                    {
-                        product.Id,
-                        product.ReorderLevel
-                    })
-                    .ToListAsync();
+            await executionStrategy.ExecuteAsync(async () =>
+            {
+                await using var databaseTransaction =
+                    await _dbContext.Database
+                        .BeginTransactionAsync();
 
-            var inventoryLevels =
-                products.Select(product =>
-                    new InventoryLevel(
-                        product.Id,
-                        location.Id,
-                        0,
-                        product.ReorderLevel))
-                .ToList();
+                _dbContext.InventoryLocations.Add(location);
+                await _dbContext.SaveChangesAsync();
 
-            _dbContext.InventoryLevels.AddRange(
-                inventoryLevels);
+                var products =
+                    await _dbContext.Products
+                        .AsNoTracking()
+                        .Select(product => new
+                        {
+                            product.Id,
+                            product.ReorderLevel
+                        })
+                        .ToListAsync();
 
-            await _dbContext.SaveChangesAsync();
-            await databaseTransaction.CommitAsync();
+                var inventoryLevels =
+                    products.Select(product =>
+                        new InventoryLevel(
+                            product.Id,
+                            location.Id,
+                            0,
+                            product.ReorderLevel))
+                        .ToList();
+
+                _dbContext.InventoryLevels.AddRange(
+                    inventoryLevels);
+
+                await _dbContext.SaveChangesAsync();
+                await databaseTransaction.CommitAsync();
+            });
         }
         catch (DbUpdateException)
         {
-            await databaseTransaction.RollbackAsync();
-
             ModelState.AddModelError(
                 string.Empty,
                 "The location could not be created.");

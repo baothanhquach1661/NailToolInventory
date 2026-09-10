@@ -150,29 +150,35 @@ public class ProductsController : Controller
             return View(model);
         }
 
-        await using var databaseTransaction =
-            await _dbContext.Database
-                .BeginTransactionAsync();
-
         try
         {
-            _dbContext.Products.Add(product);
-            await _dbContext.SaveChangesAsync();
+            var executionStrategy =
+                _dbContext.Database.CreateExecutionStrategy();
 
-            var inventoryLevels =
-                locationIds.Select(locationId =>
-                    new InventoryLevel(
-                        productId: product.Id,
-                        inventoryLocationId: locationId,
-                        initialQuantity: 0,
-                        reorderLevel: model.ReorderLevel))
-                .ToList();
+            await executionStrategy.ExecuteAsync(async () =>
+            {
+                await using var databaseTransaction =
+                    await _dbContext.Database
+                        .BeginTransactionAsync();
 
-            _dbContext.InventoryLevels.AddRange(
-                inventoryLevels);
+                _dbContext.Products.Add(product);
+                await _dbContext.SaveChangesAsync();
 
-            await _dbContext.SaveChangesAsync();
-            await databaseTransaction.CommitAsync();
+                var inventoryLevels =
+                    locationIds.Select(locationId =>
+                        new InventoryLevel(
+                            productId: product.Id,
+                            inventoryLocationId: locationId,
+                            initialQuantity: 0,
+                            reorderLevel: model.ReorderLevel))
+                    .ToList();
+
+                _dbContext.InventoryLevels.AddRange(
+                    inventoryLevels);
+
+                await _dbContext.SaveChangesAsync();
+                await databaseTransaction.CommitAsync();
+            });
 
             TempData["SuccessMessage"] =
                 $"Product {product.Sku} was created successfully.";
@@ -181,8 +187,6 @@ public class ProductsController : Controller
         }
         catch (DbUpdateException)
         {
-            await databaseTransaction.RollbackAsync();
-
             ModelState.AddModelError(
                 nameof(model.Sku),
                 "Unable to save the product. " +

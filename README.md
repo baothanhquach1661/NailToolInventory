@@ -70,7 +70,7 @@ Authorization is enforced on the server. Hiding an action in the interface is no
 | Language | C# |
 | Framework | ASP.NET Core MVC (.NET 10) |
 | Data access | Entity Framework Core |
-| Database | SQLite |
+| Database | Azure SQL Database / SQL Server |
 | Authentication | ASP.NET Core Identity |
 | Authorization | Role-based authorization |
 | UI | Razor Views, Bootstrap, CSS |
@@ -115,8 +115,7 @@ NailToolInventory/
 
 - .NET 10 SDK
 - Git
-
-SQLite is used locally, so a separate database server is not required.
+- SQL Server or Azure SQL Database
 
 ### Installation
 
@@ -132,6 +131,33 @@ Restore the local .NET tools and application dependencies:
 ```bash
 dotnet tool restore
 dotnet restore
+```
+
+Store the database connection string outside source control with .NET User
+Secrets. Replace the placeholder with an Azure SQL or SQL Server connection
+string:
+
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
+  "<YOUR_SQL_CONNECTION_STRING>" \
+  --project src/NailToolInventory.Web/NailToolInventory.csproj
+```
+
+Seed credentials are also configuration secrets and must not be committed:
+
+```bash
+dotnet user-secrets set "SeedAdmin:Email" "<ADMIN_EMAIL>" \
+  --project src/NailToolInventory.Web/NailToolInventory.csproj
+dotnet user-secrets set "SeedAdmin:Password" "<ADMIN_PASSWORD>" \
+  --project src/NailToolInventory.Web/NailToolInventory.csproj
+dotnet user-secrets set "SeedAdmin:FullName" "Administrator" \
+  --project src/NailToolInventory.Web/NailToolInventory.csproj
+dotnet user-secrets set "SeedStaff:Email" "<STAFF_EMAIL>" \
+  --project src/NailToolInventory.Web/NailToolInventory.csproj
+dotnet user-secrets set "SeedStaff:Password" "<STAFF_PASSWORD>" \
+  --project src/NailToolInventory.Web/NailToolInventory.csproj
+dotnet user-secrets set "SeedStaff:FullName" "Staff User" \
+  --project src/NailToolInventory.Web/NailToolInventory.csproj
 ```
 
 Create or update the local database:
@@ -187,7 +213,7 @@ dotnet tool run dotnet-ef database update \
 
 - Development accounts and roles are created by the identity seeding process.
 - Seeded passwords must be changed before using the application outside a local development environment.
-- The SQLite database and generated build output should not be committed to source control.
+- Connection strings, database passwords, seeded-user credentials, and generated build output should not be committed to source control.
 - Inventory-changing operations are validated on the server and recorded as transactions for traceability.
 
 ## Portfolio Highlights
@@ -208,7 +234,7 @@ This project demonstrates:
 - Purchase order and supplier management.
 - Inventory reservations for online orders.
 - Barcode scanning.
-- Deployment to a cloud-hosted SQL database.
+- Automated Azure deployment with an idempotent database migration step.
 
 ---
 
