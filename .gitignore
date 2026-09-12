@@ -489,3 +489,7 @@ $RECYCLE.BIN/
 # Local development files
 CLAUDE.md
 .DS_Store
+
+# Local IIS deployment artifacts
+/deploy-*/
+/NailToolInventory-deploy-*.zip
