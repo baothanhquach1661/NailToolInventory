@@ -1,6 +1,7 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using NailToolInventory.Data;
-using Microsoft.AspNetCore.Identity;
 using NailToolInventory.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,14 +17,19 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "or an environment variable for deployment.");
 }
 
+var sqlConnectionString = new SqlConnectionStringBuilder(connectionString)
+{
+    ConnectTimeout = 60
+}.ConnectionString;
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
-        connectionString,
+        sqlConnectionString,
         sqlServerOptions =>
             sqlServerOptions.EnableRetryOnFailure(
                 maxRetryCount: 5,
                 maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null)));
+                errorNumbersToAdd: new[] { -2 })));
 
 builder.Services
     .AddDefaultIdentity<ApplicationUser>(options =>
@@ -36,8 +42,6 @@ builder.Services
         options.Password.RequireLowercase = true;
         options.Password.RequireNonAlphanumeric = false;
     })
-
-
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
@@ -48,47 +52,38 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddRazorPages();
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapStaticAssets();
 
 app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-
 app.MapMethods(
-    "/Identity/Account/Register",
-    new[] { "GET", "POST" },
-    () => Results.NotFound())
+        "/Identity/Account/Register",
+        new[] { "GET", "POST" },
+        () => Results.NotFound())
     .WithOrder(-1);
 
-
 app.MapRazorPages();
-
 
 await IdentitySeeder.SeedAsync(
     app.Services,
     app.Configuration);
-
-
 
 app.Run();
