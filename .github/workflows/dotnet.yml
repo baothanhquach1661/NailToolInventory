@@ -1,8 +1,13 @@
-name: .NET CI
+name: .NET CI/CD
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,14 +20,14 @@ jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup .NET 10
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "10.0.x"
 
@@ -44,3 +49,163 @@ jobs:
           --configuration Release
           --no-build
           --verbosity normal
+          
+      - name: Run tests
+        run: >
+          dotnet test NailToolInventory.sln
+          --configuration Release
+          --no-build
+          --verbosity normal
+
+      - name: Validate PowerShell deployment script
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+
+      - name: Publish Windows IIS package
+        if: github.event_name != 'pull_request'
+        run: |
+          dotnet publish src/NailToolInventory.Web/NailToolInventory.csproj \
+            --configuration Release \
+            --runtime win-x64 \
+            --self-contained false \
+            --output "$RUNNER_TEMP/publish"
+
+          cd "$RUNNER_TEMP/publish"
+          zip -r "$RUNNER_TEMP/NailToolInventory.zip" .
+
+      - name: Upload deployment artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: iis-package
+          path: ${{ runner.temp }}/NailToolInventory.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Azure IIS
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    concurrency:
+      group: nailtool-production
+      cancel-in-progress: false
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout deployment script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download deployment artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: iis-package
+          path: ${{ runner.temp }}/artifact
+
+      - name: Sign in to Azure with OIDC
+        uses: Azure/login@053f7285eb20bf5469ef084617b0b24d3cec53fc # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Upload package to private Blob container
+        id: upload
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          blob_name="nailtoolinventory-${GITHUB_SHA}.zip"
+
+          package_sha256="$(
+            sha256sum "$RUNNER_TEMP/artifact/NailToolInventory.zip" |
+            awk '{print $1}'
+          )"
+
+          az storage blob upload \
+            --account-name "${{ vars.AZURE_STORAGE_ACCOUNT }}" \
+            --container-name "${{ vars.AZURE_STORAGE_CONTAINER }}" \
+            --name "$blob_name" \
+            --file "$RUNNER_TEMP/artifact/NailToolInventory.zip" \
+            --auth-mode login \
+            --overwrite true \
+            --only-show-errors
+
+          echo "blob_name=$blob_name" >> "$GITHUB_OUTPUT"
+          echo "package_sha256=$package_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Start deployment VM
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          az vm start \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ vars.AZURE_VM_NAME }}" \
+            --only-show-errors
+
+      - name: Deploy package to IIS
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deployment_output="$(
+            az vm run-command invoke \
+              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --name "${{ vars.AZURE_VM_NAME }}" \
+              --command-id RunPowerShellScript \
+              --scripts @scripts/Deploy-Iis.ps1 \
+              --parameters \
+                "StorageAccount=${{ vars.AZURE_STORAGE_ACCOUNT }}" \
+                "ContainerName=${{ vars.AZURE_STORAGE_CONTAINER }}" \
+                "BlobName=${{ steps.upload.outputs.blob_name }}" \
+                "PackageSha256=${{ steps.upload.outputs.package_sha256 }}" \
+                "AppPoolName=NailToolInventoryAppPool" \
+                "DestinationPath=C:\\inetpub\\NailToolInventory" \
+                "HealthCheckUrl=${{ vars.APP_URL }}" \
+              --query "value[].message" \
+              --output tsv
+          )"
+
+          printf '%s\n' "$deployment_output"
+
+          if ! grep -q "DEPLOYMENT_SUCCEEDED" <<< "$deployment_output"; then
+            echo "Azure Run Command did not report a successful deployment." >&2
+            exit 1
+          fi
+
+      - name: Verify public website
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for attempt in {1..18}; do
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --location \
+              --max-time 30 \
+              --output /dev/null \
+              "${{ vars.APP_URL }}"; then
+              echo "Deployment health check passed: ${{ vars.APP_URL }}"
+              exit 0
+            fi
+
+            echo "Health check attempt $attempt/18 failed; retrying in 10 seconds..."
+            sleep 10
+          done
+
+          echo "Deployment health check failed: ${{ vars.APP_URL }}" >&2
+          exit 1
+
+      - name: Sign out of Azure
+        if: always()
+        run: az logout || true
