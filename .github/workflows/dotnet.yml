@@ -49,6 +49,19 @@ jobs:
           --configuration Release
           --no-build
           --verbosity normal
+          
+      - name: Run tests
+        run: >
+          dotnet test NailToolInventory.sln
+          --configuration Release
+          --no-build
+          --verbosity normal
+
+      - name: Validate PowerShell deployment script
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
 
       - name: Publish Windows IIS package
         if: github.event_name != 'pull_request'
